@@ -6,8 +6,8 @@
 	"type": "module",
   "main": "app.js",
   "dependencies": {
-    "@google/genai": "^1.25.0",
-    "@sentry/node": "^10.20.0",
+    "@google/genai": "^1.27.0",
+    "@sentry/node": "^10.22.0",
     "axios": "^1.12.2",
 		"axios-retry": "^4.5.0",
     "body-parser": "^2.2.0",
@@ -19,7 +19,7 @@
   "devDependencies": {
     "@eslint/js": "^9.38.0",
     "@eslint/json": "^0.13.2",
-    "@eslint/markdown": "^7.4.0",
+    "@eslint/markdown": "^7.5.0",
     "@stylistic/eslint-plugin": "^5.5.0",
     "esbuild": "^0.25.11",
     "eslint": "^9.38.0",
