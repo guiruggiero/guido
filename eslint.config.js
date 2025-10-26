@@ -4,8 +4,6 @@ import js from "@eslint/js";
 import stylistic from "@stylistic/eslint-plugin";
 import globals from "globals";
 import eslintPluginYml from "eslint-plugin-yml";
-import markdown from "@eslint/markdown";
-import json from "@eslint/json";
 
 export default defineConfig([
   // JavaScript configuration
@@ -21,6 +19,7 @@ export default defineConfig([
       globals: {
         ...globals.node,
         process: true,
+        Buffer: true,
       },
     },
     rules: {
@@ -53,22 +52,5 @@ export default defineConfig([
     rules: {
       "yml/no-empty-mapping-value": "warn",
     },
-  },
-
-  // Markdown configuration
-  {
-    files: ["**/*.md"],
-    plugins: {markdown},
-    language: "markdown/gfm",
-    extends: ["markdown/recommended"],
-  },
-
-  // JSON configuration
-  {
-    files: ["**/*.json"],
-    ignores: ["**/package-lock.json"],
-    plugins: {json},
-    language: "json/json",
-    extends: ["json/recommended"],
   },
 ]);

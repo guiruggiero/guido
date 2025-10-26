@@ -1,33 +1,41 @@
 {
   "name": "guido",
   "author": "Gui Ruggiero",
-	"homepage": "https://guiruggiero.com/",
+  "homepage": "https://guiruggiero.com/",
   "version": "0.1",
-	"type": "module",
+  "type": "module",
   "main": "app.js",
   "dependencies": {
-    "@google/genai": "^1.27.0",
-    "@sentry/node": "^10.22.0",
-    "axios": "^1.12.2",
-		"axios-retry": "^4.5.0",
+    "@google-cloud/storage": "^7.17.2",
+    "@google/genai": "^1.25.0",
+    "@infisical/sdk": "^4.0.6",
+    "@langfuse/client": "^4.2.0",
+    "@sentry/node": "^10.20.0",
     "body-parser": "^2.2.0",
-    "dotenv": "^17.2.3",
     "express": "^5.1.0",
     "helmet": "^8.1.0",
-    "mongodb": "^6.20.0"
+    "mongodb": "^6.20.0",
+    "twilio": "^5.10.3"
+  },
+  "githubDependencies": {
+    "esbuild": "",
+    "terser": ""
   },
   "devDependencies": {
     "@eslint/js": "^9.38.0",
-    "@eslint/json": "^0.13.2",
-    "@eslint/markdown": "^7.5.0",
     "@stylistic/eslint-plugin": "^5.5.0",
-    "esbuild": "^0.25.11",
     "eslint": "^9.38.0",
     "eslint-plugin-yml": "^1.19.0",
     "globals": "^16.4.0",
     "nodemon": "^3.1.10"
   },
   "scripts": {
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "dev": "nodemon --env-file=.env --import ./utilities/errorTracker.js app.js",
+    "tunnel": "ngrok start guido",
+    "build": "esbuild app.js --bundle --format=esm --platform=node --packages=external --minify --sourcemap --outfile=dist/app.js",
+    "minify": "terser ./utilities/errorTracker.js --module --compress --mangle --source-map \"filename='./utilities/errorTracker.js.map',url='errorTracker.js.map'\" -o ./utilities/errorTracker.js",
+    "start": "node --env-file=.env --enable-source-maps --import ./utilities/errorTracker.js dist/app.js",
+    "monitor": "htop --sort-key=PERCENT_MEM --tree --user"
   }
 }
