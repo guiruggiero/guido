@@ -2,7 +2,6 @@
 import {execSync} from "node:child_process";
 import os from "node:os";
 import * as Sentry from "@sentry/node";
-import {cleanupDatabase} from "./databaseHandler.js";
 
 // Get current commit hash
 function getCurrentCommit() {
@@ -49,14 +48,3 @@ function instrumentErrTracking() {
 getCurrentCommit();
 getCurrentEnv();
 instrumentErrTracking();
-
-// Set up graceful shutdown
-process.on("SIGINT", async () => {
-    try {
-        await cleanupDatabase();
-        process.exit(0);
-
-    } catch {
-        process.exit(1);
-    }
-});
