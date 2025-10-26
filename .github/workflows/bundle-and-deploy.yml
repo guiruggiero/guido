@@ -1,0 +1,73 @@
+name: Bundle and deploy
+
+permissions:
+  contents: write
+
+on:
+  # eslint-disable-next-line yml/no-empty-mapping-value
+  workflow_dispatch:
+  push:
+    branches: [prod]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Install Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install CLI tools
+        run: npm install --save-dev esbuild@latest terser@latest
+
+      - name: Build with esbuild
+        run: npm run build
+
+      - name: Minify unbundled JavaScript and create source map
+        run: npm run minify
+
+      - name: Delete all but files needed at runtime and their source maps
+        run: |
+          find . -mindepth 1 -not \( \
+            -path "./.git" -o \
+            -path "./.git/*" -o \
+            -path "./dist" -o \
+            -path "./dist/*" -o \
+            -path "./src" -o \
+            -path "./src/startup.js" -o \
+            -path "./src/startup.js.map" -o \
+            -path "./.infisical.json" -o \
+            -path "./package-lock.json" -o \
+            -path "./package.json" \
+          \) -print0 | xargs -0 -P 4 -I {} rm -rf {} || exit 1
+
+      - name: Upload source to Sentry
+        uses: getsentry/action-release@v3
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: guiruggiero
+          SENTRY_PROJECT: guido
+        with:
+          sourcemaps: ./dist ./src
+
+      - name: Delete source maps
+        run: rm ./dist/app.js.map ./src/startup.js.map
+
+      - name: Push changes to "prod-min" branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add --all
+          git commit -m "Automated bundling and deployment of ${{ github.sha }}"
+          git push --force origin prod:prod-min
