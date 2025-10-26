@@ -34,7 +34,6 @@ jobs:
       - name: Build with esbuild
         run: npm run build
 
-      # TODO: might change with new Sentry instructinos (along with dev, build, and start scripts)
       - name: Minify unbundled JavaScript and create source map
         run: npm run minify
 
@@ -45,9 +44,10 @@ jobs:
             -path "./.git/*" -o \
             -path "./dist" -o \
             -path "./dist/*" -o \
-            -path "./utilities" -o \
-            -path "./utilities/errorTracker.js" -o \
-            -path "./utilities/errorTracker.js.map" -o \
+            -path "./src" -o \
+            -path "./src/startup.js" -o \
+            -path "./src/startup.js.map" -o \
+            -path "./.infisical.json" -o \
             -path "./package-lock.json" -o \
             -path "./package.json" \
           \) -print0 | xargs -0 -P 4 -I {} rm -rf {} || exit 1
@@ -59,10 +59,10 @@ jobs:
           SENTRY_ORG: guiruggiero
           SENTRY_PROJECT: guido
         with:
-          sourcemaps: ./dist ./utilities
+          sourcemaps: ./dist ./src
 
       - name: Delete source maps
-        run: rm ./dist/app.js.map ./utilities/errorTracker.js.map
+        run: rm ./dist/app.js.map ./src/startup.js.map
 
       - name: Push changes to "prod-min" branch
         run: |
