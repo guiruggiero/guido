@@ -1,10 +1,22 @@
 // Imports
+import {cleanupDatabase} from "./src/databaseHandler.js";
 import express from "express";
 import helmet from "helmet";
 import {xss} from "express-xss-sanitizer";
 import * as Sentry from "@sentry/node";
 
-// Server and middleware initializations
+// Set up graceful shutdown
+process.on("SIGINT", async () => {
+    try {
+        await cleanupDatabase();
+        process.exit(0);
+
+    } catch {
+        process.exit(1);
+    }
+});
+
+// Initialize server and middleware
 const app = express();
 app.use(express.urlencoded({extended: false, limit: "1mb"})); // POST request parser with size limit
 app.use(helmet()); // HTTP header security
