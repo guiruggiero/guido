@@ -6,26 +6,27 @@
   "type": "module",
   "main": "app.js",
   "dependencies": {
-    "@google-cloud/storage": "^7.17.2",
-    "@google/genai": "^1.25.0",
+    "@google/genai": "^1.28.0",
     "@langfuse/client": "^4.3.0",
-    "@sentry/node": "^10.20.0",
+    "@sentry/node": "^10.22.0",
+    "@vonage/jwt": "^1.12.1",
+    "@vonage/messages": "^1.22.1",
+    "@vonage/server-sdk": "^3.25.1",
     "express": "^5.1.0",
-    "express-xss-sanitizer": "^2.0.1",
     "helmet": "^8.1.0",
     "mongodb": "^6.20.0",
-    "twilio": "^5.10.3"
+    "sanitize-html": "^2.17.0"
   },
   "githubDependencies": {
     "esbuild": "",
     "terser": ""
   },
   "devDependencies": {
-    "@eslint/js": "^9.38.0",
+    "@eslint/js": "^9.39.0",
     "@stylistic/eslint-plugin": "^5.5.0",
-    "eslint": "^9.38.0",
+    "eslint": "^9.39.0",
     "eslint-plugin-yml": "^1.19.0",
-    "globals": "^16.4.0",
+    "globals": "^16.5.0",
     "nodemon": "^3.1.10"
   },
   "nodemonConfig": {
@@ -42,7 +43,7 @@
     "tunnel": "ngrok start guido",
     "build": "esbuild app.js --bundle --format=esm --platform=node --packages=external --minify --sourcemap --outfile=dist/app.js",
     "minify": "terser ./src/startup.js --module --compress --mangle --source-map \"filename='./src/startup.js.map',url='startup.js.map'\" -o ./src/startup.js",
-    "start": "infisical run -- node --enable-source-maps --import ./src/startup.js dist/app.js",
+    "start": "infisical run -- node --import ./src/startup.js dist/app.js",
     "monitor": "htop --sort-key=PERCENT_MEM --tree --user"
   }
 }

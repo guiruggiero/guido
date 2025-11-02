@@ -1,33 +1,74 @@
 // Imports
-import {cleanupDatabase} from "./src/databaseHandler.js";
 import express from "express";
 import helmet from "helmet";
-import {xss} from "express-xss-sanitizer";
+import {validateSignature, receiveMessage, sendMessage} from "./src/messageHandler.js";
+import {getTaskHistory, updateTaskHistory} from "./src/databaseHandler.js";
+// import {callLLM} from "./src/llmCaller.js";
 import * as Sentry from "@sentry/node";
-
-// Set up graceful shutdown
-process.on("SIGINT", async () => {
-    try {
-        await cleanupDatabase();
-        process.exit(0);
-
-    } catch {
-        process.exit(1);
-    }
-});
 
 // Initialize server and middleware
 const app = express();
-app.use(express.urlencoded({extended: false, limit: "1mb"})); // POST request parser with size limit
+app.use(express.json({limit: "1mb"})); // POST request parser with size limit
 app.use(helmet()); // HTTP header security
-app.use(xss()); // XSS protection
 
-// Webhook endpoint
+// Inbound message endpoint
 app.post(process.env.APP_PATH, async (req, res) => {
-    res.status(200).send("Hello world!"); // TODO: implement
+    try {
+        // Validate message signature
+        validateSignature(req);
+
+        // Acknowledge receipt
+        res.status(200).end();
+
+        // Parse and sanitize message
+        const message = await receiveMessage(req.body);
+
+        // Respond with error message if validation fails
+        if (message.validation !== "OK") {
+            sendMessage(message.validation);
+            return;
+        }
+
+        // Get task history and ID from database
+        const {taskHistory, taskID} = await getTaskHistory(message.timestamp);
+        message.taskHistory = taskHistory;
+
+        // Call LLM
+        // message.response = await callLLM(message);
+        message.response = "Bla bla";
+
+        // Respond back
+        sendMessage(message.response);
+
+        // Update task on database
+        await updateTaskHistory(message, taskID);
+    
+    } catch (error) {
+        // Acknowledge receipt if not already done
+        if (!res.headersSent) res.status(200).end();
+
+        // Unhandled error
+        if (!error.userMessage) {
+            Sentry.withScope((scope) => {
+                scope.setTag("operation", "unknown");
+                Sentry.captureException(error);
+            });
+
+            error.userMessage = "❌ Unknown error";
+        }
+
+        // Send friendly error message to user
+        sendMessage(error.userMessage);
+    }
 });
 
-// Status check endpoint
+// Message status callback endpoint
+app.post(`${process.env.APP_PATH}/message-status`, async (req, res) => {
+    // console.log(req.body);
+    res.status(200).end();
+});
+
+// App status endpoint
 app.get(process.env.APP_PATH, (req, res) => {
     res.status(200).send("GuiDo is up and running! (commit: <b>" + process.env.CURRENT_COMMIT + "</b>)");
 });
