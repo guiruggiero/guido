@@ -1,5 +1,6 @@
 // Imports
 import sanitizeHtml from "sanitize-html";
+import {URL} from "node:url";
 import fs from "node:fs/promises";
 import * as Sentry from "@sentry/node";
 import {Vonage} from "@vonage/server-sdk";
@@ -35,6 +36,10 @@ function sanitizeText(messageText) {
 // Get media file
 async function getMedia(mediaURL, messageID, extension) {
     try {
+        // Prevent Server-Side Request Forgery (SSRF)
+        const parsedUrl = new URL(mediaURL);
+        if (!parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
+
         // Get media
         const response = await fetch(mediaURL);
 
