@@ -1,7 +1,7 @@
 // Imports
 import express from "express";
 import helmet from "helmet";
-import {receiveMessage, sendMessage} from "./src/messageHandler.js";
+import {validateSignature, receiveMessage, sendMessage} from "./src/messageHandler.js";
 import {getTaskHistory, updateTaskHistory} from "./src/databaseHandler.js";
 // import {callLLM} from "./src/llmCaller.js";
 import * as Sentry from "@sentry/node";
@@ -14,11 +14,14 @@ app.use(helmet()); // HTTP header security
 // Inbound message endpoint
 app.post(process.env.APP_PATH, async (req, res) => {
     try {
-        // Parse and sanitize message
-        const message = await receiveMessage(req.body);
+        // Validate message signature
+        validateSignature(req);
 
         // Acknowledge receipt
         res.status(200).end();
+
+        // Parse and sanitize message
+        const message = await receiveMessage(req.body);
 
         // Respond with error message if validation fails
         if (message.validation !== "OK") {
@@ -32,7 +35,7 @@ app.post(process.env.APP_PATH, async (req, res) => {
 
         // Call LLM
         // message.response = await callLLM(message);
-        message.response = "Test response";
+        message.response = "Bla bla";
 
         // Respond back
         sendMessage(message.response);
@@ -56,7 +59,6 @@ app.post(process.env.APP_PATH, async (req, res) => {
 
         // Send friendly error message to user
         sendMessage(error.userMessage);
-        res.status(200).end();
     }
 });
 

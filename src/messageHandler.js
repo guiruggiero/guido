@@ -1,9 +1,10 @@
 // Imports
+import {Vonage} from "@vonage/server-sdk";
+import {verifySignature} from "@vonage/jwt";
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
 import fs from "node:fs/promises";
 import * as Sentry from "@sentry/node";
-import {Vonage} from "@vonage/server-sdk";
 import {Channels} from "@vonage/messages";
 
 // Initialization
@@ -15,6 +16,16 @@ const vonage = new Vonage(
     },
     {apiHost: "https://messages-sandbox.nexmo.com"},
 );
+
+// Validate message signature
+export function validateSignature(request) {
+    // Get signature from header
+    const signature = request.headers.authorization.split(" ")[1];
+    if (!signature) throw new Error("No signature");
+
+    // Validate signature
+    if (!verifySignature(signature, process.env.VONAGE_SIGNATURE_SECRET)) throw new Error("Invalid signature");
+}
 
 // Sanitize text message
 function sanitizeText(messageText) {
