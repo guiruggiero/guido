@@ -6,6 +6,9 @@ import globals from "globals";
 import eslintPluginYml from "eslint-plugin-yml";
 
 export default defineConfig([
+  // Global configuration
+  {ignores: ["references/**"]},
+
   // JavaScript configuration
   {
     files: ["**/*.js"],

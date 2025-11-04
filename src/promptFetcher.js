@@ -2,7 +2,7 @@
 import {LangfuseClient} from "@langfuse/client";
 import * as Sentry from "@sentry/node";
 
-// Initialization
+// Initialize Langfuse client
 const langfuse = new LangfuseClient({
     secretKey: process.env.LANGFUSE_SECRET_KEY,
     publicKey: process.env.LANGFUSE_PUBLIC_KEY,

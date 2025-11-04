@@ -1,21 +1,11 @@
 // Imports
-import {Vonage} from "@vonage/server-sdk";
 import {verifySignature} from "@vonage/jwt";
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
 import fs from "node:fs/promises";
 import * as Sentry from "@sentry/node";
+import {Vonage} from "@vonage/server-sdk";
 import {Channels} from "@vonage/messages";
-
-// Initialization
-const vonage = new Vonage(
-    {
-        apiKey: process.env.VONAGE_API_KEY,
-        apiSecret: process.env.VONAGE_API_SECRET,
-        privateKey: "", // Disable JWT auth
-    },
-    {apiHost: "https://messages-sandbox.nexmo.com"},
-);
 
 // Validate message signature
 export function validateSignature(request) {
@@ -115,6 +105,16 @@ export async function receiveMessage(messageBody) {
 
     return message;
 }
+
+// Initialize Vonage client
+const vonage = new Vonage(
+    {
+        apiKey: process.env.VONAGE_API_KEY,
+        apiSecret: process.env.VONAGE_API_SECRET,
+        privateKey: "", // Disable JWT auth
+    },
+    {apiHost: "https://messages-sandbox.nexmo.com"},
+);
 
 // Send response back
 export  function sendMessage(messageText) {

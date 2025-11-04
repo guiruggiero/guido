@@ -33,6 +33,7 @@
     "ext": "js",
     "ignore": [
       "**/.github/**",
+      "**/references/**",
       "**/eslint.config.js"
     ],
     "delay": 600000
