@@ -2,10 +2,6 @@
 import {MongoClient, ServerApiVersion} from "mongodb";
 import * as Sentry from "@sentry/node";
 
-// Initialize collections
-let mongoConnection = null;
-let tasks = null;
-
 // Database connection config with Stable API version
 const mongoOptions = {
     minPoolSize: 1,
@@ -18,12 +14,15 @@ const mongoOptions = {
     },
 };
 
+// Initialize database connection and collection
+let mongoConnection = null;
+let tasks = null;
 try {
-    // Initialize database connection
     if (!mongoConnection) {
+        // Initialize MongoDB client
         const client = new MongoClient(process.env.MONGODB_URI, mongoOptions);
 
-        // Send a ping to confirm successful connection
+        // Connect and confirm successful connection
         await client.connect();
         await client.db("admin").command({ping: 1});
 
@@ -129,7 +128,7 @@ export async function getTaskHistory(timestamp) {
                 messages: [],
             });
 
-            // Return empty task history and newk ID
+            // Return empty task history and new ID
             return {
                 taskHistory: [],
                 taskID: newTask.insertedId,
