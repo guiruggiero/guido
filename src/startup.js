@@ -1,40 +1,5 @@
-// Imports
-import {execSync} from "node:child_process";
-import os from "node:os";
-import * as Sentry from "@sentry/node";
 
-// Get current commit hash
-let currentCommit = "";
-try {
-    currentCommit = execSync("git rev-parse --short HEAD", {env: {PATH: "/usr/bin:/bin:/usr/local/bin"}}).toString().trim();
-
-} catch (error) {
-    console.warn("Failed to get current commit hash:", error.message);
-    currentCommit = "unknown";
-}
-
-process.env.CURRENT_COMMIT = currentCommit;
-
-// Get current environment
-let hostname = "";
-try {
-    hostname = os.hostname();
-
-} catch (error) {
-    console.warn("Failed to get hostname, defaulting to 'prod':", error.message);
-}
-
-process.env.ENV = hostname === "code-server" ? "dev" : "prod";
-
-// Instrument error tracking
-Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    release: process.env.CURRENT_COMMIT,
-    environment: process.env.ENV,
-    integrations: [Sentry.mongoIntegration()],
-    sendDefaultPii: true,
-    tracesSampleRate: 1.0,
-    enableLogs: true,
-});
-
-console.log("Error tracking instrumented");
+!function(){try{var e="undefined"!=typeof window?window:"undefined"!=typeof global?global:"undefined"!=typeof globalThis?globalThis:"undefined"!=typeof self?self:{},n=(new e.Error).stack;n&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[n]="b36c7f30-5394-54fa-9682-2affda7c69b6")}catch(e){}}();
+import{execSync as e}from"node:child_process";import o from"node:os";import*as n from"@sentry/node";let r="";try{r=e("git rev-parse --short HEAD",{env:{PATH:"/usr/bin:/bin:/usr/local/bin"}}).toString().trim()}catch(e){console.warn("Failed to get current commit hash:",e.message),r="unknown"}process.env.CURRENT_COMMIT=r;let s="";try{s=o.hostname()}catch(e){console.warn("Failed to get hostname, defaulting to 'prod':",e.message)}process.env.ENV="code-server"===s?"dev":"prod",n.init({dsn:process.env.SENTRY_DSN,release:process.env.CURRENT_COMMIT,environment:process.env.ENV,integrations:[n.mongoIntegration()],sendDefaultPii:!0,tracesSampleRate:1,enableLogs:!0}),console.log("Error tracking instrumented");
+//# sourceMappingURL=startup.js.map
+//# debugId=b36c7f30-5394-54fa-9682-2affda7c69b6
