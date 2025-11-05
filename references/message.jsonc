@@ -12,8 +12,9 @@
         "id": "message_uuid",
         "timestamp": "when sent, Date object",
         "type": "audio, image, or file",
-        // TODO: double check after base64
-        "content": "base64 then audioTranscription or description",
+        "extension": "ogg, jpg, pdf, etc",
+        "content": "base64",
+        "understanding": "", // TODO: how to extract?
         "validation": "OK",
         "taskHistory": "taskHistory",
         "response": "Gemini response"

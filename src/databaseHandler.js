@@ -59,7 +59,7 @@ export async function cleanupDatabase() {
 }
 
 // Graceful database shutdown
-process.on("SIGINT", async () => {
+process.on("SIGINT", async () => { // TODO: "failed to wait for command termination: exit status 130"
     try {
         await cleanupDatabase();
         process.exit(0);
@@ -84,7 +84,7 @@ function prepareForStorage(message, timestamp) {
         timestamp: message.timestamp,
         type: message.type,
         role: "user",
-        content: message.content,
+        content: message.content, // TODO: what if media? Don't want to store base64 string
     };
 
     const modelMessage = {

@@ -95,8 +95,11 @@ export async function receiveMessage(messageBody) {
 
     // Media message - "audio", "image", or "file"
     } else if (message.type === "audio" || message.type === "image" || message.type === "file") {
+        // Get file extension
+        message.extension = messageBody[message.type].name.split(".").pop();
+
         // Get media file
-        message.content = await getMedia(messageBody[message.type].url, message.id, messageBody[message.type].name.split(".")[1]);
+        message.content = await getMedia(messageBody[message.type].url, message.id, message.extension);
 
         message.validation = "OK";
 

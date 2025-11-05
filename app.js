@@ -3,7 +3,7 @@ import express from "express";
 import helmet from "helmet";
 import {validateSignature, receiveMessage, sendMessage} from "./src/messageHandler.js";
 import {getTaskHistory, updateTaskHistory} from "./src/databaseHandler.js";
-// import {callLLM} from "./src/llmCaller.js";
+import {callLLM} from "./src/llmCaller.js";
 import * as Sentry from "@sentry/node";
 
 // Initialize server and middleware
@@ -34,8 +34,8 @@ app.post(process.env.APP_PATH, async (req, res) => {
         message.taskHistory = taskHistory;
 
         // Call LLM
-        // message.response = await callLLM(message);
-        message.response = "Bla bla";
+        message.response = await callLLM(message);
+        // message.response = "Bla bla bla my brother";
 
         // Respond back
         sendMessage(message.response);
@@ -60,12 +60,6 @@ app.post(process.env.APP_PATH, async (req, res) => {
         // Send friendly error message to user
         sendMessage(error.userMessage);
     }
-});
-
-// Message status callback endpoint
-app.post(`${process.env.APP_PATH}/message-status`, async (req, res) => {
-    // console.log(req.body);
-    res.status(200).end();
 });
 
 // App status endpoint
