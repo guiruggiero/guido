@@ -5,6 +5,7 @@ import {validateSignature, receiveMessage, sendMessage} from "./src/messageHandl
 import {getTaskHistory, updateTaskHistory} from "./src/databaseHandler.js";
 import {callLLM} from "./src/llmCaller.js";
 import * as Sentry from "@sentry/node";
+import {cleanupDatabase} from "./src/databaseHandler.js";
 
 // Initialize server and middleware
 const app = express();
@@ -71,8 +72,26 @@ app.get(process.env.APP_PATH, (req, res) => {
 Sentry.setupExpressErrorHandler(app);
 
 // Start the server
-app.listen(process.env.EXPRESS_PORT, () => {
+const server = app.listen(process.env.EXPRESS_PORT, () => {
     console.log("GuiDo running on port", process.env.EXPRESS_PORT);
 
     if (process.send) process.send("ready"); // If in prod, let PM2 know app is ready
 });
+
+// Graceful shutdown
+async function gracefulShutdown() {
+    console.log("");
+
+    // Shut down database
+    await cleanupDatabase();
+
+    // Shut down server
+    server.close(() => {
+        console.log("Server shut down");
+        process.exit(0);
+    });
+}
+
+// Handle termination signals
+process.on("SIGINT", gracefulShutdown);
+process.on("SIGTERM", gracefulShutdown);

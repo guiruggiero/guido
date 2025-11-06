@@ -47,27 +47,16 @@ export async function cleanupDatabase() {
         try {
             await mongoConnection.close();
             mongoConnection = null;
-            console.log("\nDatabase connection shut down");
+            console.log("Database connection shut down");
 
         } catch (error) {
-            console.error("\nFailed to shut down database connection");
+            console.error("Failed to shut down database connection");
 
             // Rethrow to send correct exit code
             throw error;
         }
     }
 }
-
-// Graceful database shutdown
-process.on("SIGINT", async () => { // TODO: "failed to wait for command termination: exit status 130"
-    try {
-        await cleanupDatabase();
-        process.exit(0);
-
-    } catch {
-        process.exit(1);
-    }
-});
 
 // Prepare task history for LLM call
 function prepareForLLM(taskHistory) {
