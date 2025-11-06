@@ -47,6 +47,11 @@ export function getTools() {
         parameters: {
             type: Type.OBJECT,
             properties: {
+                // type: { // TODO
+                //     type: Type.STRING,
+                //     enum: ["text", "audio", "image", "file"],
+                //     description: "Message type to be summarized",
+                // },
                 summary: {
                     type: Type.STRING,
                     description: "A concise paragraph summarizing the key points or action items from messages",
@@ -125,11 +130,20 @@ const toolHandlers = {
     create_calendar_event: async (args) => {
         // TODO: Google Calendar API call
 
-        return `Event "${args.title}" created successfully! Link: `; // ${calendarEvent.link}
+        return {
+            success: true,
+            title: args.title,
+            start: args.start,
+            timeZone: args.timeZone,
+            link: "https://calendar.google.com", // calendarEvent.link
+        };
     },
 
     summarize: (args) => {
-        return args.summary;
+        return {
+            success: true,
+            summary: args.summary,
+        };
     },
 
     add_to_splitwise: async (args) => {
@@ -150,7 +164,12 @@ const toolHandlers = {
             currency: args.currency,
         }).format(args.amount);
 
-        return `Expense "${args.title}" of ${formattedBalance} created successfully! Link: https://secure.splitwise.com/#/activity`; // TODO: deep link
+        return {
+            success: true,
+            title: args.title,
+            amount: formattedBalance,
+            link: "https://secure.splitwise.com/#/activity", // TODO: deep link
+        };
     },
 };
 

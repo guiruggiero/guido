@@ -64,16 +64,16 @@ export async function callLLM(message) {
         const response = await chat.sendMessage({message: llmMessage});
 
         // No tool calls
-        if (!response?.functionCalls || response.functionCalls.length === 0) return response.text;
+        if (!response?.functionCalls || response.functionCalls.length === 0) return response.candidates[0].content.parts[0].text;
 
         else {
             // Only one tool call
-            const toolResponsePart = {
+            const toolResponse = {
                 name: response.functionCalls[0].name,
                 response: await handleTool(response.functionCalls[0]),
             };
 
-            // TODO: Multiple tool calls - for each, execute and gather results
+            // TODO: compositional tool calls - for each, execute and gather results https://ai.google.dev/gemini-api/docs/function-calling?example=weather#compositional_function_calling
             // const toolResponses = await Promise.all(response.functionCalls.map(async (toolCall) => {
             //     return {functionResponse: {
             //         name: toolCall.name,
@@ -82,9 +82,13 @@ export async function callLLM(message) {
             // }));
 
             // Send results to model
-            const finalResponse = await chat.sendMessage({functionResponse: toolResponsePart});
+            console.log("toolResponse:", JSON.stringify(toolResponse, null, 2));
+            console.log("Argument to final sendMessage:", JSON.stringify([{functionResponse: toolResponse}], null, 2));
+            const finalResponse = await chat.sendMessage([{functionResponse: toolResponse}]);
 
-            return finalResponse.text;
+            message.status = "completed";
+
+            return finalResponse.candidates[0].content.parts[0].text;
         }
 
     } catch (error) {
