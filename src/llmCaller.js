@@ -17,8 +17,8 @@ const modelConfig = {
         },
         tools: [
             {functionDeclarations: getTools()},
-            // {googleSearch: {}},
-            // {urlContext: {}},
+            {googleSearch: {}},
+            {urlContext: {}},
         ],
         toolConfig: {
             functionCallingConfig: {
@@ -50,7 +50,9 @@ export async function callLLM(message) {
         // Construct message for LLM
         let llmMessage = null;
         if (message.type === "text") llmMessage = message.content;
-        else { // Media message
+
+        // Media message
+        else {
             llmMessage = [
                 // {text: "Summarize this audio/document, caption this image"}, // TODO: needed?
                 {inlineData: {
@@ -66,30 +68,31 @@ export async function callLLM(message) {
         // No tool calls
         if (!response?.functionCalls || response.functionCalls.length === 0) return response.candidates[0].content.parts[0].text;
 
-        else {
-            // Only one tool call
+        // Handle tool calls in sequence (compositional)
+        let currentResponse = response;
+        while (currentResponse?.functionCalls && currentResponse.functionCalls.length > 0) {
+            // Get the tool
+            const toolCall = currentResponse.functionCalls[0];
+            
+            // console.log(`Executing tool: ${toolCall.name}`);
+            
+            // Execute the tool
             const toolResponse = [{
                 functionResponse: {
-                    name: response.functionCalls[0].name,
-                    response: await handleTool(response.functionCalls[0]),
+                    name: toolCall.name,
+                    response: await handleTool(toolCall),
                 },
             }];
 
-            // TODO: compositional tool calls - for each, execute and gather results https://ai.google.dev/gemini-api/docs/function-calling?example=weather#compositional_function_calling
-            // const toolResponses = await Promise.all(response.functionCalls.map(async (toolCall) => {
-            //     return {functionResponse: {
-            //         name: toolCall.name,
-            //         response: await handleTool(toolCall),
-            //     }};
-            // }));
+            // console.log("Tool response:", JSON.stringify(toolResponse, null, 2));
 
-            // Send results to model
-            const finalResponse = await chat.sendMessage({message: toolResponse});
-
-            message.status = "completed";
-
-            return finalResponse.candidates[0].content.parts[0].text;
+            // Send tool result to model
+            currentResponse = await chat.sendMessage({message: toolResponse});
         }
+
+        // No more tool calls
+        message.status = "completed";
+        return currentResponse.candidates[0].content.parts[0].text;
 
     } catch (error) {
         Sentry.withScope((scope) => {
