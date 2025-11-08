@@ -137,7 +137,7 @@ export async function getTaskHistory(timestamp) {
 }
 
 // Update task history
-export async function updateTaskHistory(message, taskID, timestamp = new Date()) {
+export async function updateTaskHistory(message, taskID, taskStatus, timestamp = new Date()) {
     // Prepare message for storage
     const newMessages = prepareForStorage(message, timestamp);
 
@@ -147,7 +147,7 @@ export async function updateTaskHistory(message, taskID, timestamp = new Date())
             $push: {messages: {$each: newMessages}},
             $set: {
                 updated: timestamp,
-                ...(message.status && {status: message.status}), // If status exists, update too
+                ...(taskStatus && {status: taskStatus}), // If status exists, update too
             },
         };
 

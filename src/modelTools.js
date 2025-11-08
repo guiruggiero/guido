@@ -89,10 +89,27 @@ export function getTools() {
         },
     };
 
+    const completeTask = { // TODO: add to prompt
+        name: "complete_task",
+        description: "Completes the task at hand by updating its status in the database",
+        parameters: {
+            type: Type.OBJECT,
+            properties: {
+                taskStatus: {
+                    type: Type.STRING,
+                    enum: ["success"],
+                    description: "Pass 'success' status to clomplete task (with Gui's confirmation)",
+                },
+            },
+            required: ["taskStatus"],
+        },
+    };
+
     return [
         createCalendarEvent,
         summarize,
         addToSplitwise,
+        completeTask,
     ];
 }
 
@@ -169,6 +186,13 @@ const toolHandlers = {
             title: args.title,
             amount: formattedBalance,
             link: "https://secure.splitwise.com/#/activity", // TODO: deep link
+        };
+    },
+
+    complete_task: (args) => {
+        return {
+            success: true,
+            taskStatus: args.taskStatus,
         };
     },
 };

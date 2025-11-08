@@ -35,14 +35,15 @@ app.post(process.env.APP_PATH, async (req, res) => {
         message.taskHistory = taskHistory;
 
         // Call LLM
-        message.response = await callLLM(message);
+        const llmResult = await callLLM(message);
+        message.response = llmResult.response;
         // message.response = "Bla bla bla my brother";
 
         // Respond back
         sendMessage(message.response);
 
         // Update task on database
-        await updateTaskHistory(message, taskID);
+        await updateTaskHistory(message, taskID, llmResult.taskStatus);
     
     } catch (error) {
         // Acknowledge receipt if not already done

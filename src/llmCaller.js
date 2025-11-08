@@ -66,10 +66,11 @@ export async function callLLM(message) {
         const response = await chat.sendMessage({message: llmMessage});
 
         // No tool calls
-        if (!response?.functionCalls || response.functionCalls.length === 0) return response.candidates[0].content.parts[0].text;
+        if (!response?.functionCalls || response.functionCalls.length === 0) return {response: response.candidates[0].content.parts[0].text};
 
         // Handle tool calls in sequence (compositional)
         let currentResponse = response;
+        let taskStatus;
         while (currentResponse?.functionCalls && currentResponse.functionCalls.length > 0) {
             // Get the tool
             const toolCall = currentResponse.functionCalls[0];
@@ -77,10 +78,13 @@ export async function callLLM(message) {
             // console.log(`Executing tool: ${toolCall.name}`);
             
             // Execute the tool
+            const toolResult = await handleTool(toolCall);
+            if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
+
             const toolResponse = [{
                 functionResponse: {
                     name: toolCall.name,
-                    response: await handleTool(toolCall),
+                    response: toolResult,
                 },
             }];
 
@@ -91,8 +95,10 @@ export async function callLLM(message) {
         }
 
         // No more tool calls
-        message.status = "completed";
-        return currentResponse.candidates[0].content.parts[0].text;
+        return {
+            response: currentResponse.candidates[0].content.parts[0].text,
+            taskStatus: taskStatus,
+        };
 
     } catch (error) {
         Sentry.withScope((scope) => {
