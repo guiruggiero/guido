@@ -2,6 +2,8 @@
 import {execSync} from "node:child_process";
 import os from "node:os";
 import * as Sentry from "@sentry/node";
+import {NodeSDK} from "@opentelemetry/sdk-node";
+import {LangfuseSpanProcessor} from "@langfuse/otel";
 
 // Get current commit hash
 let currentCommit = "";
@@ -38,3 +40,9 @@ Sentry.init({
 });
 
 console.log("Error tracking instrumented");
+
+// Initialize observability
+const sdk = new NodeSDK({spanProcessors: [new LangfuseSpanProcessor()]});
+sdk.start();
+
+console.log("Observability instrumented");
