@@ -31,9 +31,9 @@ const modelConfig = {
 
 // Call LLM
 export async function callLLM(message) {
-    return await startActiveObservation("llm-interaction", async (trace) => { // needs return?
+    return await startActiveObservation("llm-interaction", async (trace) => { // TODO: needs return?
         // Update trace with metadata
-        trace.update({
+        trace.update({ // TODO: why divided into input and metadata?, review context
             input: {
                 messageid: message.id,
                 messageType: message.type,
@@ -76,11 +76,35 @@ export async function callLLM(message) {
                 ];
             }
 
+            // Create generation observation for LLM call
+            const generationObs = startObservation("llm-call",
+                { // TODO: review context
+                    model: modelConfig.model,
+                    modelParameters: {temperature: modelConfig.config.temperature},
+                    input: typeof llmMessage === "string" ? llmMessage : "[Media content]",
+                },
+                {asType: "generation"},
+            );
+
             // Call LLM
             const response = await chat.sendMessage({message: llmMessage});
 
+            // Update generation observation
+            generationObs.update({ // TODO: review context
+                output: response.candidates[0].content.parts[0].text,
+                usage: response.usageMetadata ? {
+                    input: response.usageMetadata.promptTokenCount,
+                    output: response.usageMetadata.candidatesTokenCount,
+                    total: response.usageMetadata.totalTokenCount,
+                } : undefined,
+            });
+            generationObs.end();
+
             // No tool calls
-            if (!response?.functionCalls || response.functionCalls.length === 0) return {response: response.candidates[0].content.parts[0].text};
+            if (!response?.functionCalls || response.functionCalls.length === 0) {
+                trace.update({output: response.candidates[0].content.parts[0].text}); // TODO: why trace and not generation?
+                return {response: response.candidates[0].content.parts[0].text};
+            }
 
             // Handle tool calls in sequence (compositional)
             let currentResponse = response;
@@ -88,13 +112,16 @@ export async function callLLM(message) {
             while (currentResponse?.functionCalls && currentResponse.functionCalls.length > 0) {
                 // Get the tool
                 const toolCall = currentResponse.functionCalls[0];
-                
-                // console.log(`Executing tool: ${toolCall.name}`);
+
+                // Create tool observation
+                const toolObs = startObservation(`tool-${toolCall.name}`, // TODO: review context
+                    {input: toolCall.args},
+                    {asType: "tool"},
+                );
                 
                 // Execute the tool
                 const toolResult = await handleTool(toolCall);
                 if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
-
                 const toolResponse = [{
                     functionResponse: {
                         name: toolCall.name,
@@ -102,11 +129,40 @@ export async function callLLM(message) {
                     },
                 }];
 
-                // console.log("Tool response:", JSON.stringify(toolResponse, null, 2));
+                // Update tool observation
+                toolObs.update({output: toolResult});
+                toolObs.end();
+
+                // Create observation for processing tool result
+                const toolFollowUpObs = startObservation("llm-followup", // TODO: review context
+                    {
+                        model: modelConfig.model,
+                        input: toolResponse,
+                    },
+                    {asType: "generation"},
+                );
 
                 // Send tool result to model
                 currentResponse = await chat.sendMessage({message: toolResponse});
+
+                // Update tool result processing observation
+                toolFollowUpObs.update({ // TODO: review context
+                    output: currentResponse.candidates[0].content.parts[0].text,
+                    usage: currentResponse.usageMetadata ? {
+                        input: currentResponse.usageMetadata.promptTokenCount,
+                        output: currentResponse.usageMetadata.candidatesTokenCount,
+                        total: currentResponse.usageMetadata.totalTokenCount,
+                    } : undefined,
+                });
+                toolFollowUpObs.end();
             }
+
+            // Update trace with final output
+            trace.update({ // TODO: review context
+                output: currentResponse.candidates[0].content.parts[0].text,
+                metadata: {toolsUsed: taskStatus ? true : false},
+            });
+            // TODO: no trace.end();?
 
             // No more tool calls
             return {
@@ -123,6 +179,12 @@ export async function callLLM(message) {
                     messageID: message.id,
                 });
                 Sentry.captureException(error);
+            });
+
+            // Update trace with error
+            trace.update({
+                level: "ERROR",
+                statusMessage: error.message,
             });
 
             // Rethrow to show user a message

@@ -6,7 +6,7 @@ import * as Sentry from "@sentry/node";
 const langfuse = new LangfuseClient({
     secretKey: process.env.LANGFUSE_SECRET_KEY,
     publicKey: process.env.LANGFUSE_PUBLIC_KEY,
-    baseUrl: "https://us.cloud.langfuse.com",
+    baseUrl: process.env.LANGFUSE_BASE_URL,
 });
 
 // Different prompts according to environment
