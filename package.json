@@ -10,7 +10,7 @@
     "@langfuse/client": "^4.5.1",
     "@langfuse/otel": "^4.5.1",
     "@langfuse/tracing": "^4.4.2",
-    "@opentelemetry/sdk-node": "^0.211.0",
+    "@opentelemetry/sdk-node": "^0.212.0",
     "@sentry/node": "^10.38.0",
     "@vonage/jwt": "^1.13.0",
     "@vonage/messages": "^1.23.0",
