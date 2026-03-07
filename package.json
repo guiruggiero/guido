@@ -6,12 +6,12 @@
   "type": "module",
   "main": "app.js",
   "dependencies": {
-    "@google/genai": "^1.43.0",
+    "@google/genai": "^1.44.0",
     "@langfuse/client": "^4.5.1",
     "@langfuse/otel": "^4.5.1",
     "@langfuse/tracing": "^4.4.2",
-    "@opentelemetry/sdk-node": "^0.212.0",
-    "@sentry/node": "^10.40.0",
+    "@opentelemetry/sdk-node": "^0.213.0",
+    "@sentry/node": "^10.42.0",
     "@vonage/jwt": "^1.13.3",
     "@vonage/messages": "^1.23.4",
     "@vonage/server-sdk": "^3.26.4",
@@ -31,9 +31,9 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@stylistic/eslint-plugin": "^5.9.0",
-    "eslint": "^10.0.2",
-    "eslint-plugin-yml": "^3.3.0",
+    "@stylistic/eslint-plugin": "^5.10.0",
+    "eslint": "^10.0.3",
+    "eslint-plugin-yml": "^3.3.1",
     "globals": "^17.4.0",
     "nodemon": "^3.1.14"
   },
