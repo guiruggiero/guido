@@ -12,9 +12,8 @@ const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 const modelConfig = {
     model: "gemini-flash-latest",
     config: {
-        temperature: 0.4,
         thinkingconfig: {
-            thinkingbudget: 0,
+            thinkingLevel: "low", // Or "minimal" or "medium"?
         },
         tools: [
             {functionDeclarations: getTools()},
@@ -78,7 +77,7 @@ export async function callLLM(message) {
 
             // Create generation observation for LLM call
             const generationObs = startObservation("llm-call",
-                { // TODO: review context
+                { // TODO: review context, no more temperature, new thinkingLevel
                     model: modelConfig.model,
                     modelParameters: {temperature: modelConfig.config.temperature},
                     input: typeof llmMessage === "string" ? llmMessage : "[Media content]",
