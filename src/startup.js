@@ -6,7 +6,7 @@ import {NodeSDK} from "@opentelemetry/sdk-node";
 import {LangfuseSpanProcessor} from "@langfuse/otel";
 
 // Get current commit hash
-let currentCommit = "";
+let currentCommit;
 try {
     currentCommit = execSync("git rev-parse --short HEAD", {env: {PATH: "/usr/bin:/bin:/usr/local/bin"}}).toString().trim();
 

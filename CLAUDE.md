@@ -16,7 +16,6 @@ npm run lint      # ESLint
 npm run tunnel    # Expose localhost via ngrok (requires ngrok profile named "guido")
 ```
 
-No test suite exists yet.
 
 ## Architecture
 
@@ -52,3 +51,5 @@ Triggered by pushing to the `prod` branch (or manual dispatch via `.github/workf
 1. ESBuild bundles to `dist/app.js`; source maps uploaded to Sentry, then deleted
 2. Production bundle force-pushed to the `prod-min` branch
 3. Server pulls from `prod-min` and restarts via PM2
+
+**Sentry:** Errors logged to the `guido` project (`GUIDO-*` issue IDs).
