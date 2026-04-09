@@ -62,7 +62,9 @@ export async function cleanupDatabase() {
 function prepareForLLM(taskHistory) {
     return taskHistory.map(msg => ({
         role: msg.role,
-        parts: [{text: msg.content}],
+        parts: (msg.role === "user" && msg.type !== "text")
+            ? [{text: `[${msg.type}: ${msg.content}]`}]
+            : [{text: msg.content}],
     }));
 }
 
@@ -73,7 +75,7 @@ function prepareForStorage(message, timestamp) {
         timestamp: message.timestamp,
         type: message.type,
         role: "user",
-        content: message.content, // TODO: what if media? Don't want to store base64 string
+        content: message.type === "text" ? message.content : `${message.id}.${message.extension}`,
     };
 
     const modelMessage = {

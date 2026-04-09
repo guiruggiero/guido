@@ -90,7 +90,7 @@ export async function callLLM(message) {
 
             // Update generation observation
             generationObs.update({ // TODO: review context
-                output: response.candidates[0].content.parts[0].text,
+                output: response.candidates?.[0]?.content?.parts?.[0]?.text,
                 usage: response.usageMetadata ? {
                     input: response.usageMetadata.promptTokenCount,
                     output: response.usageMetadata.candidatesTokenCount,
@@ -101,8 +101,8 @@ export async function callLLM(message) {
 
             // No tool calls
             if (!response?.functionCalls || response.functionCalls.length === 0) {
-                trace.update({output: response.candidates[0].content.parts[0].text}); // TODO: why trace and not generation?
-                return {response: response.candidates[0].content.parts[0].text};
+                trace.update({output: response.candidates?.[0]?.content?.parts?.[0]?.text}); // TODO: why trace and not generation?
+                return {response: response.candidates?.[0]?.content?.parts?.[0]?.text ?? ""};
             }
 
             // Handle tool calls in sequence (compositional)
@@ -146,7 +146,7 @@ export async function callLLM(message) {
 
                 // Update tool result processing observation
                 toolFollowUpObs.update({ // TODO: review context
-                    output: currentResponse.candidates[0].content.parts[0].text,
+                    output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
                     usage: currentResponse.usageMetadata ? {
                         input: currentResponse.usageMetadata.promptTokenCount,
                         output: currentResponse.usageMetadata.candidatesTokenCount,
@@ -158,14 +158,14 @@ export async function callLLM(message) {
 
             // Update trace with final output
             trace.update({ // TODO: review context
-                output: currentResponse.candidates[0].content.parts[0].text,
+                output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
                 metadata: {toolsUsed: taskStatus ? true : false},
             });
             // TODO: no trace.end();?
 
             // No more tool calls
             return {
-                response: currentResponse.candidates[0].content.parts[0].text,
+                response: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text ?? "",
                 taskStatus: taskStatus,
             };
 

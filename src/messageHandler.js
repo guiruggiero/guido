@@ -10,8 +10,9 @@ import {Channels} from "@vonage/messages";
 // Validate message signature
 export function validateSignature(request) {
     // Get signature from header
-    const signature = request.headers.authorization.split(" ")[1];
-    if (!signature) throw new Error("No signature");
+    const authHeader = request.headers.authorization;
+    if (!authHeader) throw new Error("No signature");
+    const signature = authHeader.split(" ")[1];
 
     // Validate signature
     if (!verifySignature(signature, process.env.VONAGE_SIGNATURE_SECRET)) throw new Error("Invalid signature");
@@ -26,7 +27,7 @@ function sanitizeText(messageText) {
     sanitizedMessage = sanitizedMessage.trim();
     
     // Remove HTML tags and attributes
-    sanitizedMessage = sanitizeHtml(sanitizedMessage, { 
+    sanitizedMessage = sanitizeHtml(sanitizedMessage, {
         allowedTags: [],
         allowedAttributes: {},
     });
@@ -120,9 +121,9 @@ const vonage = new Vonage(
 );
 
 // Send response back
-export  function sendMessage(messageText) {
+export async function sendMessage(messageText) {
     try {
-        vonage.messages.send({
+        await vonage.messages.send({
             from: "14157386102",
             to: process.env.PHONE_NUMBER,
             channel: Channels.WHATSAPP,

@@ -26,7 +26,7 @@ app.post(process.env.APP_PATH, async (req, res) => {
 
         // Respond with error message if validation fails
         if (message.validation !== "OK") {
-            sendMessage(message.validation);
+            await sendMessage(message.validation);
             return;
         }
 
@@ -40,7 +40,7 @@ app.post(process.env.APP_PATH, async (req, res) => {
         // message.response = "Bla bla bla my brother";
 
         // Respond back
-        sendMessage(message.response);
+        await sendMessage(message.response);
 
         // Update task on database
         await updateTaskHistory(message, taskID, llmResult.taskStatus);
@@ -60,7 +60,8 @@ app.post(process.env.APP_PATH, async (req, res) => {
         }
 
         // Send friendly error message to user
-        sendMessage(error.userMessage);
+        try {await sendMessage(error.userMessage);}
+        catch {/* ignore, nothing more we can do */}
     }
 });
 

@@ -200,6 +200,7 @@ const toolHandlers = {
 // Tool handlers
 export async function handleTool(toolCall) {
     const handler = toolHandlers[toolCall.name];
+    if (!handler) return `Unknown tool: ${toolCall.name}`;
 
     try {
         // TODO: instead of logging? https://docs.sentry.io/platforms/javascript/enriching-events/breadcrumbs/

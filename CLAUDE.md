@@ -9,11 +9,11 @@ GuiDo is a WhatsApp AI assistant. Incoming WhatsApp messages arrive via a Vonage
 ## Commands
 
 ```bash
-npm run dev       # Start with nodemon + Infisical secrets (requires Infisical CLI)
-npm run build     # Bundle with ESBuild → dist/app.js
-npm run start     # Run production build with Infisical secrets
-npm run lint      # ESLint
-npm run tunnel    # Expose localhost via ngrok (requires ngrok profile named "guido")
+npm run dev     # Start with nodemon + Infisical secrets (requires Infisical CLI)
+npm run build   # Bundle with ESBuild → dist/app.js
+npm run start   # Run production build with Infisical secrets
+npm run lint    # ESLint
+npm run tunnel  # Expose localhost via ngrok (requires ngrok profile named "guido")
 ```
 
 
@@ -42,6 +42,8 @@ npm run tunnel    # Expose localhost via ngrok (requires ngrok profile named "gu
 | `startup.js` | Sentry + OpenTelemetry init, environment detection |
 
 **Environment detection** (`startup.js`): hostname `"code-server"` → dev; otherwise → prod. This controls Langfuse prompt label (`"latest"` vs `"production"`).
+
+**Media handling**: media files (image, audio, file) are fetched from Vonage and saved to `media/{messageId}.{ext}` on disk (development only — will move to Cloud Storage). In MongoDB, only the filename is stored as the message `content`, not the base64 data. When replaying history to the LLM, `prepareForLLM` formats media turns as `[type: filename]` (e.g., `[image: abc123.jpg]`).
 
 **Secrets** are managed by Infisical CLI. The app reads `process.env` for `VONAGE_*`, `GEMINI_API_KEY`, `MONGODB_URI`, `SENTRY_DSN`, `SPLITWISE_API_KEY`, `LANGFUSE_*`, `APP_PATH`, `EXPRESS_PORT`, `PHONE_NUMBER`.
 
