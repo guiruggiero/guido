@@ -2,7 +2,7 @@
 import {verifySignature} from "@vonage/jwt";
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
-import fs from "node:fs/promises";
+import {writeFile} from "node:fs/promises";
 import * as Sentry from "@sentry/node";
 import {Vonage} from "@vonage/server-sdk";
 import {Channels} from "@vonage/messages";
@@ -50,7 +50,7 @@ async function getMedia(mediaURL, messageID, extension) {
         const buffer = Buffer.from(arrayBuffer);
 
         // Save in local folder
-        await fs.writeFile(`/home/ubuntu/guido/media/${messageID}.${extension}`, buffer);
+        await writeFile(`/home/ubuntu/guido/media/${messageID}.${extension}`, buffer);
 
         // Convert to base64 for LLM call
         return buffer.toString("base64");
