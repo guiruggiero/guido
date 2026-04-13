@@ -48,11 +48,14 @@
   },
   "scripts": {
     "lint": "eslint .",
+    "lint-fix": "eslint . --fix",
     "dev": "infisical run -- nodemon --import ./src/startup.js app.js",
     "tunnel": "ngrok start guido",
     "build": "esbuild app.js --bundle --format=esm --platform=node --packages=external --minify --sourcemap --outfile=dist/app.js",
     "minify": "terser ./src/startup.js --module --compress --mangle --source-map \"filename='./src/startup.js.map',url='startup.js.map'\" -o ./src/startup.js",
     "start": "infisical run -- node --import ./src/startup.js dist/app.js",
-    "monitor": "htop --sort-key=PERCENT_MEM --tree --user"
+    "monitor": "htop --sort-key=PERCENT_MEM --tree --user",
+    "prompt-pull": "infisical run -- node scripts/prompt.js pull",
+    "prompt-push": "infisical run -- node scripts/prompt.js push"
   }
 }
