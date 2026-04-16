@@ -168,7 +168,7 @@ const toolHandlers = {
         const expenseResponse = await axiosInstance.post("/create_expense", {
             cost: args.amount.toFixed(2),
             description: args.title,
-            details: args.details + "\n\nCreated with GuiDo",
+            details: `${args.details}\n\nCreated with GuiDo`,
             currency_code: args.currency,
             group_id: 0, // Direct expense between users
             split_equally: true,

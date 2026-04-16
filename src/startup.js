@@ -11,7 +11,7 @@ try {
     currentCommit = execSync("git rev-parse --short HEAD", {env: {PATH: "/usr/bin:/bin:/usr/local/bin"}}).toString().trim();
 
 } catch (error) {
-    console.warn("Failed to get current commit hash:", error.message);
+    console.warn(`Failed to get current commit hash: ${error.message}`);
     currentCommit = "unknown";
 }
 
@@ -23,7 +23,7 @@ try {
     hostname = os.hostname();
 
 } catch (error) {
-    console.warn("Failed to get hostname, defaulting to 'prod':", error.message);
+    console.warn(`Failed to get hostname, defaulting to "prod": ${error.message}`);
 }
 
 process.env.ENV = hostname === "code-server" ? "dev" : "prod";

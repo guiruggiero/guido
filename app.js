@@ -67,7 +67,7 @@ app.post(process.env.APP_PATH, async (req, res) => {
 
 // App status endpoint
 app.get(process.env.APP_PATH, (req, res) => {
-    res.status(200).send("GuiDo is up and running! (commit: <b>" + process.env.CURRENT_COMMIT + "</b>)");
+    res.status(200).send(`GuiDo is up and running! (commit: <b>${process.env.CURRENT_COMMIT}</b>)`);
 });
 
 // Middleware for error tracking
@@ -75,7 +75,7 @@ Sentry.setupExpressErrorHandler(app);
 
 // Start the server
 const server = app.listen(process.env.EXPRESS_PORT, () => {
-    console.log("GuiDo running on port", process.env.EXPRESS_PORT);
+    console.log(`GuiDo running on port ${process.env.EXPRESS_PORT}`);
 
     if (process.send) process.send("ready"); // If in prod, let PM2 know app is ready
 });
