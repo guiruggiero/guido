@@ -10,8 +10,8 @@
     "@langfuse/client": "^5.1.0",
     "@langfuse/otel": "^5.1.0",
     "@langfuse/tracing": "^5.0.1",
-    "@opentelemetry/sdk-node": "^0.214.0",
-    "@sentry/node": "^10.48.0",
+    "@opentelemetry/sdk-node": "^0.215.0",
+    "@sentry/node": "^10.49.0",
     "@vonage/jwt": "^1.14.0",
     "@vonage/messages": "^1.24.0",
     "@vonage/server-sdk": "^3.27.0",
@@ -32,7 +32,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "eslint": "^10.2.0",
+    "eslint": "^10.2.1",
     "eslint-plugin-yml": "^3.3.1",
     "globals": "^17.4.0",
     "nodemon": "^3.1.14"
