@@ -18,16 +18,14 @@ const mongoOptions = {
 let mongoConnection = null;
 let tasks = null;
 try {
-    if (!mongoConnection) {
-        // Initialize MongoDB client
-        const client = new MongoClient(process.env.MONGODB_URI, mongoOptions);
+    // Initialize MongoDB client
+    const client = new MongoClient(process.env.MONGODB_URI, mongoOptions);
 
-        // Connect and confirm successful connection
-        await client.connect();
-        await client.db("admin").command({ping: 1});
+    // Connect and confirm successful connection
+    await client.connect();
+    await client.db("admin").command({ping: 1});
 
-        mongoConnection = client;
-    }
+    mongoConnection = client;
 
     // Get task collection
     tasks = mongoConnection.db(process.env.ENV).collection("tasks");

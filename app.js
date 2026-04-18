@@ -2,10 +2,10 @@
 import express from "express";
 import helmet from "helmet";
 import {validateSignature, receiveMessage, sendMessage} from "./src/messageHandler.js";
-import {getTaskHistory, updateTaskHistory} from "./src/databaseHandler.js";
+import {getTaskHistory, updateTaskHistory, cleanupDatabase} from "./src/databaseHandler.js";
 import {callLLM} from "./src/llmCaller.js";
 import * as Sentry from "@sentry/node";
-import {cleanupDatabase} from "./src/databaseHandler.js";
+import {sdk} from "./src/startup.js";
 
 // Initialize server and middleware
 const app = express();
@@ -81,15 +81,23 @@ const server = app.listen(process.env.EXPRESS_PORT, () => {
 });
 
 // Graceful shutdown
-async function gracefulShutdown() {
+function gracefulShutdown() {
     console.log("");
 
-    // Shut down database
-    await cleanupDatabase();
+    // Force exit if shutdown hangs
+    setTimeout(() => process.exit(1), 10000).unref();
 
-    // Shut down server
-    server.close(() => {
+    // Stop accepting new connections, wait for in-flight requests to finish
+    server.close(async () => {
         console.log("Server shut down");
+
+        // Flush observability traces and error events
+        await sdk.shutdown();
+        await Sentry.close(2000);
+
+        // Shut down database
+        await cleanupDatabase();
+
         process.exit(0);
     });
 }

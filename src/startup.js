@@ -48,11 +48,7 @@ Sentry.init({
 console.log("Error tracking instrumented");
 
 // Initialize observability
-const sdk = new NodeSDK({spanProcessors: [new LangfuseSpanProcessor()]});
+export const sdk = new NodeSDK({spanProcessors: [new LangfuseSpanProcessor()]});
 sdk.start();
 
 console.log("Observability instrumented");
-
-// Add shutdown handler directly in startup.js
-process.on("SIGINT", async () => await sdk.shutdown());
-process.on("SIGTERM", async () => await sdk.shutdown());
