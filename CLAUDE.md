@@ -1,26 +1,8 @@
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+# GuiDo Codebase Reference
 
 ## What This Project Is
 
 GuiDo is a WhatsApp AI assistant. Incoming WhatsApp messages arrive via a Vonage webhook, get processed by Gemini (via Langfuse-managed prompts), and may trigger tool calls (Splitwise expense creation, calendar events, etc.) before a reply is sent back through Vonage. Conversation context is persisted per-task in MongoDB.
-
-## Commands
-
-```bash
-npm run dev           # Start with nodemon + Infisical secrets (requires Infisical CLI)
-npm run build         # Bundle with ESBuild → dist/app.js
-npm run start         # Run production build with Infisical secrets
-npm run lint          # ESLint check
-npm run lint-fix      # ESLint with auto-fix
-npm run tunnel        # Expose localhost via ngrok (requires ngrok profile named "guido")
-npm run minify        # Minify src/startup.js with Terser (in-place)
-npm run monitor       # htop system monitor
-npm run prompt-pull   # Download production prompt from Langfuse → prompt.md
-npm run prompt-push   # Upload prompt.md to Langfuse as new version, not production
-```
-
 
 ## Architecture
 
