@@ -11,7 +11,7 @@
     "@langfuse/otel": "^5.1.0",
     "@langfuse/tracing": "^5.0.1",
     "@opentelemetry/sdk-node": "^0.215.0",
-    "@sentry/node": "^10.49.0",
+    "@sentry/node": "^10.50.0",
     "@vonage/jwt": "^1.14.0",
     "@vonage/messages": "^1.24.0",
     "@vonage/server-sdk": "^3.27.0",
