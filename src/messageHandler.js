@@ -43,13 +43,25 @@ async function getMedia(mediaURL, messageID, extension) {
         if (!parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
 
         // Get media
+        const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
         const response = await fetch(mediaURL);
+
+        // Validate file size — TODO: byteLength check below may be redundant for trusted Vonage CDN
+        const contentLength = parseInt(response.headers.get("content-length"), 10);
+        if (contentLength > MAX_MEDIA_SIZE) {
+            Sentry.logger.error("Media file too large", {contentLength, messageID});
+            throw new Error("Media file too large");
+        }
 
         // Convert response to buffer
         const arrayBuffer = await response.arrayBuffer();
+        if (arrayBuffer.byteLength > MAX_MEDIA_SIZE) {
+            Sentry.logger.error("Media file too large", {byteLength: arrayBuffer.byteLength, messageID});
+            throw new Error("Media file too large");
+        }
         const buffer = Buffer.from(arrayBuffer);
 
-        // Save in local folder
+        // Save in local folder - TODO: upload media to Google Cloud Storage
         await writeFile(`/home/ubuntu/guido/media/${messageID}.${extension}`, buffer);
 
         // Convert to base64 for LLM call

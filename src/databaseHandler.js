@@ -85,7 +85,7 @@ function prepareForStorage(message, timestamp) {
     return [userMessage, modelMessage];
 }
 
-// Get task history or start new task
+// TODO: find-then-insert is not atomic — will need to handle when implementing queuing/successive message handling
 export async function getTaskHistory(timestamp) {
     try {
         // Check for task in progress

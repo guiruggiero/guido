@@ -98,7 +98,7 @@ export function getTools() {
                 taskStatus: {
                     type: Type.STRING,
                     enum: ["success"],
-                    description: "Pass 'success' status to clomplete task (with Gui's confirmation)",
+                    description: "Pass 'success' status to complete task (with Gui's confirmation)",
                 },
             },
             required: ["taskStatus"],
