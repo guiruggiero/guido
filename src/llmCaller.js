@@ -12,7 +12,7 @@ const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 const modelConfig = {
     model: "gemini-flash-latest",
     config: {
-        thinkingconfig: {
+        thinkingConfig: {
             thinkingLevel: "low", // Or "minimal" or "medium"?
         },
         tools: [
