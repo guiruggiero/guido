@@ -2,6 +2,7 @@
 import {Type} from "@google/genai";
 import {createSoloExpense} from "../utils/splitwise.js";
 
+// Tool definition
 export const definition = {
     name: "addToSplitwise",
     description: "Adds an expense to Splitwise to be shared with other people",
@@ -30,6 +31,7 @@ export const definition = {
     },
 };
 
+// Tool handler
 export const handler = async (args) => {
     await createSoloExpense(args.title, args.amount, args.currency, args.details);
 

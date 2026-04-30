@@ -1,6 +1,7 @@
 // Import
 import {createRetryClient} from "./axiosClient.js";
 
+// Initialize Splitwise client
 const splitwiseClient = createRetryClient({
     baseURL: "https://secure.splitwise.com/api/v3.0",
     headers: {"Authorization": `Bearer ${process.env.SPLITWISE_API_KEY}`},

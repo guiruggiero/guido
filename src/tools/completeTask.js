@@ -1,6 +1,7 @@
 // Import
 import {Type} from "@google/genai";
 
+// Tool definition
 export const definition = {
     name: "completeTask", // TODO: add to prompt
     description: "Completes the task at hand by updating its status in the database",
@@ -17,6 +18,7 @@ export const definition = {
     },
 };
 
+// Tool handler
 export const handler = (args) => {
     return {
         success: true,

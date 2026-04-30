@@ -1,6 +1,7 @@
 // Import
 import {Type} from "@google/genai";
 
+// Tool definition
 export const definition = {
     name: "summarize",
     description: "Creates a concise summary of the message in a single paragraph",
@@ -16,6 +17,7 @@ export const definition = {
     },
 };
 
+// Tool handler
 export const handler = (args) => {
     return {
         success: true,

@@ -144,6 +144,7 @@ export async function callLLM(message) {
                     Sentry.logger.warn("Tool loop iteration limit reached", {iterations});
                     break;
                 }
+
                 // Get the tool
                 const toolCall = currentResponse.functionCalls[0];
 

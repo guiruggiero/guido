@@ -1,6 +1,7 @@
 // Import
 import {Type} from "@google/genai";
 
+// Tool definition
 export const definition = {
     name: "createCalendarEvent",
     description: "Creates a calendar event with title and time, location, and description",
@@ -36,6 +37,7 @@ export const definition = {
     },
 };
 
+// Tool handler
 export const handler = async (args) => {
     // TODO: Google Calendar API call
 
