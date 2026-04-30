@@ -106,9 +106,15 @@ export async function callLLM(message) {
             }
 
             // Handle tool calls in sequence (compositional)
+            const MAX_TOOL_ITERATIONS = 10;
             let currentResponse = response;
             let taskStatus;
+            let iterations = 0;
             while (currentResponse?.functionCalls && currentResponse.functionCalls.length > 0) {
+                if (++iterations > MAX_TOOL_ITERATIONS) {
+                    Sentry.logger.warn("Tool loop iteration limit reached", {iterations});
+                    break;
+                }
                 // Get the tool
                 const toolCall = currentResponse.functionCalls[0];
 
