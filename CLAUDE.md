@@ -12,7 +12,7 @@ GuiDo is a WhatsApp AI assistant. Incoming WhatsApp messages arrive via a Vonage
 3. `receiveMessage` validates the sender phone number, sanitizes text or fetches media
 4. `getTaskHistory` retrieves or creates an active MongoDB task (conversation context)
 5. `callLLM` sends history + dynamic prompt to Gemini, loops through tool calls
-6. Each tool call dispatches to `handleTool` in `modelTools.js`
+6. Each tool call dispatches via the `toolHandlers` registry in `llmCaller.js`
 7. `sendMessage` sends the final reply via Vonage
 8. `updateTaskHistory` persists the new messages to MongoDB
 
@@ -21,20 +21,37 @@ GuiDo is a WhatsApp AI assistant. Incoming WhatsApp messages arrive via a Vonage
 | File | Role |
 |---|---|
 | `app.js` | Express server, webhook route, orchestration loop |
+| `llmCaller.js` | Gemini API calls, Langfuse tracing, tool registry + dispatch loop |
 | `messageHandler.js` | Vonage integration, message parsing, media handling |
 | `databaseHandler.js` | MongoDB task CRUD, conversation history |
-| `llmCaller.js` | Gemini API calls, Langfuse tracing, tool-call loop |
-| `modelTools.js` | Tool definitions (Gemini function declarations) and handlers |
-| `promptFetcher.js` | Fetches and caches prompts from Langfuse |
+| `promptFetcher.js` | Fetches and caches prompts from Langfuse, shared by app and scripts |
 | `startup.js` | Sentry + OpenTelemetry init, environment detection |
+
+**Tools** (under `src/tools/`, one file per tool):
+
+Each tool file exports `definition` (Gemini function declaration) and `handler` (async execution function). Tool names are camelCase. `llmCaller.js` imports all tools, builds a `functionDeclarations` array and `toolHandlers` map, and dispatches by name.
+
+| File | Tool |
+|---|---|
+| `tools/createCalendarEvent.js` | Creates Google Calendar events (TODO: API integration) |
+| `tools/summarize.js` | Creates concise summaries of messages |
+| `tools/addToSplitwise.js` | Adds expenses to Splitwise |
+| `tools/completeTask.js` | Marks a task as completed |
+
+**Utilities** (under `src/utils/`):
+
+| File | Role |
+|---|---|
+| `utils/axiosClient.js` | HTTP retry client factory with exponential backoff |
+| `utils/splitwise.js` | Splitwise API client and error checking |
 
 **Environment detection** (`startup.js`): hostname `"code-server"` → dev; otherwise → prod. This controls Langfuse prompt label (`"latest"` vs `"production"`).
 
-**Media handling**: media files (image, audio, file) are fetched from Vonage and saved to `media/{messageId}.{ext}` on disk (development only — will move to Cloud Storage). In MongoDB, only the filename is stored as the message `content`, not the base64 data. When replaying history to the LLM, `prepareForLLM` formats media turns as `[type: filename]` (e.g., `[image: abc123.jpg]`).
+**Media handling**: media files (image, audio, file) are fetched from Vonage and saved to `media/{messageId}.{ext}` on disk (TODO: migrate to Google Cloud Storage). In MongoDB, only the filename is stored as the message `content`, not the base64 data. When replaying history to the LLM, `prepareForLLM` formats media turns as `[type: filename]` (e.g., `[image: abc123.jpg]`).
 
 **Secrets** are managed by Infisical CLI. The app reads `process.env` for `VONAGE_*`, `GEMINI_API_KEY`, `MONGODB_URI`, `SENTRY_DSN`, `SPLITWISE_API_KEY`, `LANGFUSE_*`, `APP_PATH`, `EXPRESS_PORT`, `PHONE_NUMBER`.
 
-**Prompt management**: `prompt.md` is the system prompt managed via the scripts above and excluded from regular commits. Always perform changes to the system prompt, but never consider it in the commit message. Scripts run via Infisical to inject `LANGFUSE_*` secrets.
+**Prompt management**: `prompt.md` is the system prompt managed via `scripts/prompt.js` and excluded from regular commits. Always perform changes to the system prompt, but never consider it in the commit message. Scripts run via Infisical to inject `LANGFUSE_*` secrets.
 
 ## Deployment
 
