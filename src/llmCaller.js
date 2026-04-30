@@ -1,12 +1,42 @@
 // Imports
 import {GoogleGenAI, FunctionCallingConfigMode} from "@google/genai";
-import {getTools, handleTool} from "./modelTools.js";
 import {startActiveObservation, startObservation} from "@langfuse/tracing";
 import {getPrompt} from "./promptFetcher.js";
 import * as Sentry from "@sentry/node";
+import {
+    definition as createCalendarEventDef,
+    handler as createCalendarEventHandler,
+} from "./tools/createCalendarEvent.js";
+import {
+    definition as summarizeDef,
+    handler as summarizeHandler,
+} from "./tools/summarize.js";
+import {
+    definition as addToSplitwiseDef,
+    handler as addToSplitwiseHandler,
+} from "./tools/addToSplitwise.js";
+import {
+    definition as completeTaskDef,
+    handler as completeTaskHandler,
+} from "./tools/completeTask.js";
 
 // Initialize Gemini client
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
+
+// Tool registry
+const functionDeclarations = [
+    createCalendarEventDef,
+    summarizeDef,
+    addToSplitwiseDef,
+    completeTaskDef,
+];
+
+const toolHandlers = {
+    [createCalendarEventDef.name]: createCalendarEventHandler,
+    [summarizeDef.name]: summarizeHandler,
+    [addToSplitwiseDef.name]: addToSplitwiseHandler,
+    [completeTaskDef.name]: completeTaskHandler,
+};
 
 // Model configuration
 const modelConfig = {
@@ -16,7 +46,7 @@ const modelConfig = {
             thinkingLevel: "low", // Or "minimal" or "medium"?
         },
         tools: [
-            {functionDeclarations: getTools()},
+            {functionDeclarations},
             {googleSearch: {}},
             {urlContext: {}},
         ],
@@ -125,7 +155,23 @@ export async function callLLM(message) {
                 );
                 
                 // Execute the tool
-                const toolResult = await handleTool(toolCall);
+                const handler = toolHandlers[toolCall.name];
+                if (!handler) throw new Error(`Unknown tool: ${toolCall.name}`);
+
+                let toolResult;
+                try {
+                    toolResult = await handler(toolCall.args);
+                } catch (error) {
+                    Sentry.withScope((scope) => {
+                        scope.setTag("operation", "handleTool");
+                        scope.setContext("payload", {
+                            toolName: toolCall.name,
+                            toolCall: toolCall.args,
+                        });
+                        Sentry.captureException(error);
+                    });
+                    toolResult = `Error calling tool ${toolCall.name}`;
+                }
                 if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
                 const toolResponse = [{
                     functionResponse: {
