@@ -4,19 +4,12 @@ import {fileURLToPath} from "node:url";
 import path from "node:path";
 import os from "node:os";
 import {spawnSync} from "node:child_process";
-import {LangfuseClient} from "@langfuse/client";
+import {fetchPrompt, createPromptVersion} from "../src/promptFetcher.js";
 
 // ESM path resolution
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const PROMPT_FILE = path.join(__dirname, "..", "prompt.md");
-
-// Langfuse client
-const langfuse = new LangfuseClient({
-    secretKey: process.env.LANGFUSE_SECRET_KEY,
-    publicKey: process.env.LANGFUSE_PUBLIC_KEY,
-    baseUrl: process.env.LANGFUSE_BASE_URL,
-});
 
 // Pull: download production prompt from Langfuse and write to prompt.md
 const pull = async () => {
@@ -28,34 +21,29 @@ const pull = async () => {
         // File doesn't exist yet — skip diff
     }
 
-    const res = await langfuse.prompt.get("GuiDo");
+    const {prompt, version} = await fetchPrompt("GuiDo");
 
     // Show diff between local and production
     if (localContent !== null) {
-        const tmpOld = path.join(os.tmpdir(), "prompt_old.md");
-        const tmpNew = path.join(os.tmpdir(), "prompt_new.md");
+        const tmpOld = path.join(os.tmpdir(), "promptOld.md");
+        const tmpNew = path.join(os.tmpdir(), "promptNew.md");
         writeFileSync(tmpOld, localContent);
-        writeFileSync(tmpNew, res.prompt);
+        writeFileSync(tmpNew, prompt);
         const result = spawnSync("diff", ["-u", tmpOld, tmpNew], {
             stdio: "inherit",
         });
         if (result.status === 0) console.log("(no changes)");
     }
 
-    writeFileSync(PROMPT_FILE, res.prompt);
-    console.log(`Pulled version ${res.version} to prompt.md`);
+    writeFileSync(PROMPT_FILE, prompt);
+    console.log(`Pulled version ${version} to prompt.md`);
 };
 
 // Push: upload prompt.md to Langfuse as a new version (not production)
 const push = async () => {
     const content = readFileSync(PROMPT_FILE, "utf-8");
-    const res = await langfuse.prompt.create({
-        name: "GuiDo",
-        type: "text",
-        prompt: content,
-        labels: [], // omit "production"
-    });
-    console.log(`Pushed prompt.md as version ${res.version} (not production)`);
+    const version = await createPromptVersion("GuiDo", content);
+    console.log(`Pushed prompt.md as version ${version} (not production)`);
 };
 
 // Run based on command-line argument

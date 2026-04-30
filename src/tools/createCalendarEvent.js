@@ -2,7 +2,7 @@
 import {Type} from "@google/genai";
 
 export const definition = {
-    name: "create_calendar_event",
+    name: "createCalendarEvent",
     description: "Creates a calendar event with title and time, location, and description",
     parameters: {
         type: Type.OBJECT,

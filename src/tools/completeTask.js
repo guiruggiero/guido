@@ -2,7 +2,7 @@
 import {Type} from "@google/genai";
 
 export const definition = {
-    name: "complete_task", // TODO: add to prompt
+    name: "completeTask", // TODO: add to prompt
     description: "Completes the task at hand by updating its status in the database",
     parameters: {
         type: Type.OBJECT,

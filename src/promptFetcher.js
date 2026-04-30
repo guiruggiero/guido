@@ -24,6 +24,23 @@ try {
     throw error;
 }
     
+// Fetch the production version of a prompt by name
+export const fetchPrompt = async (name) => {
+    const res = await langfuse.prompt.get(name);
+    return {prompt: res.prompt, version: res.version};
+};
+
+// Create a new prompt version without setting it as production
+export const createPromptVersion = async (name, content) => {
+    const res = await langfuse.prompt.create({
+        name,
+        type: "text",
+        prompt: content,
+        labels: [],
+    });
+    return res.version;
+};
+
 // Get model prompt
 export async function getPrompt(variables = {}) {
     const response = await langfuse.prompt.get("GuiDo", {

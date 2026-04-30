@@ -60,9 +60,9 @@ const modelConfig = {
 
 // Call LLM
 export async function callLLM(message) {
-    return await startActiveObservation("llm-interaction", async (trace) => { // TODO: needs return?
+    return await startActiveObservation("llm-interaction", async (trace) => {
         // Update trace with metadata
-        trace.update({ // TODO: why divided into input and metadata?, review context
+        trace.update({
             input: {
                 messageid: message.id,
                 messageType: message.type,
@@ -77,7 +77,7 @@ export async function callLLM(message) {
             // Get model prompt
             const instructions = await getPrompt({ // Prompt variable
                 today: (message.timestamp).toLocaleDateString("en-US", {day: "numeric", month: "long", year: "numeric", timeZone: "America/Los_Angeles"}),
-                time: (message.timestamp).toLocaleTimeString("en-US", {hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles"}), // TODO: get time zone at runtime
+                time: (message.timestamp).toLocaleTimeString("en-US", {hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles"}), // FIXME: get time zone at runtime
             });
 
             // Initialize chat with task history and prompt
@@ -97,7 +97,6 @@ export async function callLLM(message) {
             // Media message
             else {
                 llmMessage = [
-                    // {text: "Summarize this audio/document, caption this image"}, // TODO: needed?
                     {inlineData: {
                         mimeType: `${message.type}/${message.extension}`,
                         data: message.content, // Base64 data
@@ -107,9 +106,9 @@ export async function callLLM(message) {
 
             // Create generation observation for LLM call
             const generationObs = startObservation("llm-call",
-                { // TODO: review context, no more temperature, new thinkingLevel
+                {
                     model: modelConfig.model,
-                    modelParameters: {temperature: modelConfig.config.temperature},
+                    modelParameters: {thinkingLevel: modelConfig.config.thinkingConfig.thinkingLevel},
                     input: typeof llmMessage === "string" ? llmMessage : "[Media content]",
                 },
                 {asType: "generation"},
@@ -119,7 +118,7 @@ export async function callLLM(message) {
             const response = await chat.sendMessage({message: llmMessage});
 
             // Update generation observation
-            generationObs.update({ // TODO: review context
+            generationObs.update({
                 output: response.candidates?.[0]?.content?.parts?.[0]?.text,
                 usage: response.usageMetadata ? {
                     input: response.usageMetadata.promptTokenCount,
@@ -131,7 +130,7 @@ export async function callLLM(message) {
 
             // No tool calls
             if (!response?.functionCalls || response.functionCalls.length === 0) {
-                trace.update({output: response.candidates?.[0]?.content?.parts?.[0]?.text}); // TODO: why trace and not generation?
+                trace.update({output: response.candidates?.[0]?.content?.parts?.[0]?.text});
                 return {response: response.candidates?.[0]?.content?.parts?.[0]?.text ?? ""};
             }
 
@@ -149,7 +148,7 @@ export async function callLLM(message) {
                 const toolCall = currentResponse.functionCalls[0];
 
                 // Create tool observation
-                const toolObs = startObservation(`tool-${toolCall.name}`, // TODO: review context
+                const toolObs = startObservation(`tool-${toolCall.name}`,
                     {input: toolCall.args},
                     {asType: "tool"},
                 );
@@ -185,7 +184,7 @@ export async function callLLM(message) {
                 toolObs.end();
 
                 // Create observation for processing tool result
-                const toolFollowUpObs = startObservation("llm-followup", // TODO: review context
+                const toolFollowUpObs = startObservation("llm-followup",
                     {
                         model: modelConfig.model,
                         input: toolResponse,
@@ -197,7 +196,7 @@ export async function callLLM(message) {
                 currentResponse = await chat.sendMessage({message: toolResponse});
 
                 // Update tool result processing observation
-                toolFollowUpObs.update({ // TODO: review context
+                toolFollowUpObs.update({
                     output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
                     usage: currentResponse.usageMetadata ? {
                         input: currentResponse.usageMetadata.promptTokenCount,
@@ -209,11 +208,10 @@ export async function callLLM(message) {
             }
 
             // Update trace with final output
-            trace.update({ // TODO: review context
+            trace.update({
                 output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
                 metadata: {toolsUsed: taskStatus ? true : false},
             });
-            // TODO: no trace.end();?
 
             // No more tool calls
             return {

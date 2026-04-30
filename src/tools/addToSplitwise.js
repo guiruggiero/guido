@@ -3,7 +3,7 @@ import {Type} from "@google/genai";
 import {createSoloExpense} from "../utils/splitwise.js";
 
 export const definition = {
-    name: "add_to_splitwise",
+    name: "addToSplitwise",
     description: "Adds an expense to Splitwise to be shared with other people",
     parameters: {
         type: Type.OBJECT,

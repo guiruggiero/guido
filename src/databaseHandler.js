@@ -69,7 +69,7 @@ function prepareForLLM(taskHistory) {
 // Prepare messages to be stored
 function prepareForStorage(message, timestamp) {
     const userMessage = {
-        whatsapp_id: message.id,
+        whatsappId: message.id,
         timestamp: message.timestamp,
         type: message.type,
         role: "user",
