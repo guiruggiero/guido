@@ -51,7 +51,7 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 
 **Secrets** are managed by Infisical CLI. The app reads `process.env` for `VONAGE_*`, `GEMINI_API_KEY`, `MONGODB_URI`, `SENTRY_DSN`, `SPLITWISE_API_KEY`, `LANGFUSE_*`, `APP_PATH`, `EXPRESS_PORT`, `PHONE_NUMBER`.
 
-**Prompt management**: `prompt.md` is the system prompt managed via `scripts/prompt.js` and excluded from regular commits. Always perform changes to the system prompt, but never consider it in the commit message. Scripts run via Infisical to inject `LANGFUSE_*` secrets.
+**Prompt management**: `prompt.md` is the system prompt managed via `scripts/promptSync.js` and excluded from regular commits. Always perform changes to the system prompt, but never consider it in the commit message. Scripts run via Infisical to inject `LANGFUSE_*` secrets.
 
 ## Deployment
 

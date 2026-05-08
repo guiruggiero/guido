@@ -55,7 +55,7 @@
     "minify": "terser ./src/startup.js --module --compress --mangle --source-map \"filename='./src/startup.js.map',url='startup.js.map'\" -o ./src/startup.js",
     "start": "infisical run -- node --import ./src/startup.js dist/app.js",
     "monitor": "htop --sort-key=PERCENT_MEM --tree --user",
-    "prompt-pull": "infisical run -- node scripts/prompt.js pull",
-    "prompt-push": "infisical run -- node scripts/prompt.js push"
+    "prompt-pull": "infisical run -- node scripts/promptSync.js pull",
+    "prompt-push": "infisical run -- node scripts/promptSync.js push"
   }
 }
