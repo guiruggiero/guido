@@ -68,18 +68,22 @@ function prepareForLLM(taskHistory) {
 
 // Prepare messages to be stored
 function prepareForStorage(message, timestamp) {
+    // Explicit coercions keep user-derived values as plain strings (not MongoDB operators)
+    const allowedTypes = new Set(["text", "audio", "image", "file"]);
+    const safeType = allowedTypes.has(message.type) ? message.type : "text";
+
     const userMessage = {
-        whatsappId: message.id,
+        whatsappId: String(message.id),
         timestamp: message.timestamp,
-        type: message.type,
+        type: safeType,
         role: "user",
-        content: message.type === "text" ? message.content : `${message.id}.${message.extension}`,
+        content: safeType === "text" ? String(message.content) : `${String(message.id)}.${String(message.extension)}`,
     };
 
     const modelMessage = {
         timestamp: timestamp,
         role: "model",
-        content: message.response,
+        content: String(message.response),
     };
 
     return [userMessage, modelMessage];

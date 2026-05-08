@@ -42,9 +42,9 @@ async function getMedia(mediaURL, messageID, extension) {
         const parsedUrl = new URL(mediaURL);
         if (!parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
 
-        // Get media
+        // Get media 
         const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
-        const response = await fetch(mediaURL);
+        const response = await fetch(parsedUrl.href);
 
         // Validate file size — TODO: byteLength check below may be redundant for trusted Vonage CDN
         const contentLength = parseInt(response.headers.get("content-length"), 10);
