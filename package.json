@@ -10,8 +10,8 @@
     "@langfuse/client": "^5.4.1",
     "@langfuse/otel": "^5.4.1",
     "@langfuse/tracing": "^5.0.1",
-    "@opentelemetry/sdk-node": "^0.218.0",
-    "@sentry/node": "^10.56.0",
+    "@opentelemetry/sdk-node": "^0.219.0",
+    "@sentry/node": "^10.57.0",
     "@vonage/jwt": "^1.14.0",
     "@vonage/messages": "^1.24.0",
     "@vonage/server-sdk": "^3.27.0",
@@ -19,8 +19,8 @@
     "axios-retry": "^4.5.0",
     "express": "^5.2.1",
     "helmet": "^8.2.0",
-    "mongodb": "^7.1.1",
-    "sanitize-html": "^2.17.4"
+    "mongodb": "^7.3.0",
+    "sanitize-html": "^2.17.5"
   },
   "githubDependencies": {
     "esbuild": "",
@@ -32,7 +32,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
-    "eslint": "^10.4.1",
+    "eslint": "^10.5.0",
     "eslint-plugin-yml": "^3.4.0",
     "globals": "^17.6.0",
     "nodemon": "^3.1.14"
