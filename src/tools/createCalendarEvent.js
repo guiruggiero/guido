@@ -1,5 +1,6 @@
 // Import
 import {Type} from "@google/genai";
+import {createCalendarEvent} from "../utils/guiddleware.js";
 
 // Tool definition
 export const definition = {
@@ -32,6 +33,11 @@ export const definition = {
                 type: Type.STRING,
                 description: "Additional details of the event",
             },
+            calendar: {
+                type: Type.STRING,
+                enum: ["default", "shared"],
+                description: "Calendar to add the event to: 'default' for Gui's personal calendar, 'shared' for the calendar shared with Georgia. Defaults to 'default' if not mentioned.",
+            },
         },
         required: ["title", "start", "end", "timeZone"],
     },
@@ -39,13 +45,21 @@ export const definition = {
 
 // Tool handler
 export const handler = async (args) => {
-    // TODO: Google Calendar API call
+    const result = await createCalendarEvent({
+        summary: args.title,
+        start: args.start,
+        end: args.end,
+        timeZone: args.timeZone,
+        location: args.location,
+        description: args.description,
+        calendar: args.calendar,
+    });
 
     return {
         success: true,
         title: args.title,
         start: args.start,
         timeZone: args.timeZone,
-        link: "https://calendar.google.com", // calendarEvent.link
+        link: result.link,
     };
 };

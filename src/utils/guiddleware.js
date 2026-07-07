@@ -16,3 +16,15 @@ export const createTask = async (payload) => {
     const res = await guiddlewareClient.post("/tasks", payload);
     return res.data;
 };
+
+// Creates a Splitwise expense; resolution/fallback logic lives in Guiddleware
+export const createExpense = async (payload) => {
+    const res = await guiddlewareClient.post("/splitwise/expenses", payload);
+    return res.data;
+};
+
+// Creates a Google Calendar event
+export const createCalendarEvent = async (payload) => {
+    const res = await guiddlewareClient.post("/calendar/events", payload);
+    return res.data;
+};

@@ -33,9 +33,9 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 
 | File | Tool |
 |---|---|
-| `tools/createCalendarEvent.js` | Creates Google Calendar events (TODO: API integration) |
+| `tools/createCalendarEvent.js` | Creates Google Calendar events, via Guiddleware |
 | `tools/summarize.js` | Creates concise summaries of messages |
-| `tools/addToSplitwise.js` | Adds expenses to Splitwise |
+| `tools/addToSplitwise.js` | Adds expenses to Splitwise, via Guiddleware |
 | `tools/addToTasks.js` | Adds a to-do item to Google Tasks, via Guiddleware |
 | `tools/completeTask.js` | Marks a task as completed |
 
@@ -44,14 +44,15 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 | File | Role |
 |---|---|
 | `utils/axiosClient.js` | HTTP retry client factory with exponential backoff |
-| `utils/splitwise.js` | Splitwise API client and error checking |
-| `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`); currently just `createTask(payload)` for Google Tasks — Splitwise/Calendar still use GuiDo's own local clients above, pending their own migration to Guiddleware |
+| `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`): `createTask(payload)`, `createExpense(payload)` (Splitwise), `createCalendarEvent(payload)` |
+
+Splitwise and Google Calendar used to have their own local clients here (`utils/splitwise.js`, a Calendar stub) — both now go through Guiddleware instead, which also means `addToSplitwise` gained split/uneven-split support GuiDo never had before (previously solo-expense only).
 
 **Environment detection** (`startup.js`): hostname `"code-server"` → dev; otherwise → prod. This controls Langfuse prompt label (`"latest"` vs `"production"`).
 
 **Media handling**: media files (image, audio, file) are fetched from Vonage and saved to `media/{messageId}.{ext}` on disk (TODO: migrate to Google Cloud Storage). In MongoDB, only the filename is stored as the message `content`, not the base64 data. When replaying history to the LLM, `prepareForLLM` formats media turns as `[type: filename]` (e.g., `[image: abc123.jpg]`).
 
-**Secrets** are managed by Infisical CLI (one environment, `dev`, used everywhere — the dev/prod split above is just a Langfuse prompt label, not a separate secret store). The app reads `process.env` for `VONAGE_*`, `GEMINI_API_KEY`, `MONGODB_URI`, `SENTRY_DSN`, `SPLITWISE_API_KEY`, `LANGFUSE_*`, `APP_PATH`, `EXPRESS_PORT`, `PHONE_NUMBER`, `GUIDDLEWARE_URL`, `GUIDDLEWARE_SECRET_GUIDO`.
+**Secrets** are managed by Infisical CLI (one environment, `dev`, used everywhere — the dev/prod split above is just a Langfuse prompt label, not a separate secret store). The app reads `process.env` for `VONAGE_*`, `GEMINI_API_KEY`, `MONGODB_URI`, `SENTRY_DSN`, `LANGFUSE_*`, `APP_PATH`, `EXPRESS_PORT`, `PHONE_NUMBER`, `GUIDDLEWARE_URL`, `GUIDDLEWARE_SECRET_GUIDO`.
 
 **Prompt management**: `prompt.md` is the system prompt managed via `scripts/promptSync.js` and excluded from regular commits. Always perform changes to the system prompt, but never consider it in the commit message. Scripts run via Infisical to inject `LANGFUSE_*` secrets.
 
