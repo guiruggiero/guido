@@ -16,6 +16,10 @@ import {
     handler as addToSplitwiseHandler,
 } from "./tools/addToSplitwise.js";
 import {
+    definition as addToTasksDef,
+    handler as addToTasksHandler,
+} from "./tools/addToTasks.js";
+import {
     definition as completeTaskDef,
     handler as completeTaskHandler,
 } from "./tools/completeTask.js";
@@ -28,6 +32,7 @@ const functionDeclarations = [
     createCalendarEventDef,
     summarizeDef,
     addToSplitwiseDef,
+    addToTasksDef,
     completeTaskDef,
 ];
 
@@ -35,6 +40,7 @@ const toolHandlers = {
     [createCalendarEventDef.name]: createCalendarEventHandler,
     [summarizeDef.name]: summarizeHandler,
     [addToSplitwiseDef.name]: addToSplitwiseHandler,
+    [addToTasksDef.name]: addToTasksHandler,
     [completeTaskDef.name]: completeTaskHandler,
 };
 
