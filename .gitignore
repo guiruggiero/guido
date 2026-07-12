@@ -3,3 +3,4 @@ node_modules/
 dist/
 media/
 prompt.md
+.DS_Store
