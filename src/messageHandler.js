@@ -1,22 +1,10 @@
 // Imports
-import {verifySignature} from "@vonage/jwt";
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
 import {writeFile} from "node:fs/promises";
 import * as Sentry from "@sentry/node";
 import {Vonage} from "@vonage/server-sdk";
 import {Channels} from "@vonage/messages";
-
-// Validate message signature
-export function validateSignature(request) {
-    // Get signature from header
-    const authHeader = request.headers.authorization;
-    if (!authHeader) throw new Error("No signature");
-    const signature = authHeader.split(" ")[1];
-
-    // Validate signature
-    if (!verifySignature(signature, process.env.VONAGE_SIGNATURE_SECRET)) throw new Error("Invalid signature");
-}
 
 // Sanitize text message
 function sanitizeText(messageText) {

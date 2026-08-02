@@ -1,19 +1,30 @@
 // Imports
 import express from "express";
 import helmet from "helmet";
-import {validateSignature, receiveMessage, sendMessage} from "./src/messageHandler.js";
+import rateLimit from "express-rate-limit";
+import {validateSignature} from "./src/auth.js";
+import {receiveMessage, sendMessage} from "./src/messageHandler.js";
 import {getTaskHistory, updateTaskHistory, cleanupDatabase} from "./src/databaseHandler.js";
 import {callLLM} from "./src/llmCaller.js";
 import * as Sentry from "@sentry/node";
 import {sdk} from "./src/startup.js";
 
-// Initialize server and middleware
+// Express app
 const app = express();
 app.use(express.json({limit: "1mb"})); // POST request parser with size limit
 app.use(helmet()); // HTTP header security
 
+// Rate limiter (by IP)
+const webhookRateLimit = rateLimit({
+    limit: 20,
+    windowMs: 10 * 60 * 1000, // 10 minutes
+    standardHeaders: true,
+    legacyHeaders: false,
+    handler: (req, res) => res.status(429).send("Too many requests"),
+});
+
 // Inbound message endpoint
-app.post(process.env.APP_PATH, async (req, res) => {
+app.post(process.env.APP_PATH, webhookRateLimit, async (req, res) => {
     try {
         // Validate message signature
         validateSignature(req);
@@ -66,7 +77,7 @@ app.post(process.env.APP_PATH, async (req, res) => {
 });
 
 // App status endpoint
-app.get(process.env.APP_PATH, (req, res) => {
+app.get(process.env.APP_PATH, webhookRateLimit, (req, res) => {
     res.status(200).send(`GuiDo is up and running! (commit: <b>${process.env.CURRENT_COMMIT}</b>)`);
 });
 

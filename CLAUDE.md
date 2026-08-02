@@ -7,7 +7,7 @@ GuiDo is a WhatsApp AI assistant. Incoming WhatsApp messages arrive via a Vonage
 ## Architecture
 
 **Request lifecycle** (all in `app.js`):
-1. Vonage sends a POST to the webhook — signature is verified via `validateSignature`
+1. Vonage sends a POST to the webhook — rate-limited to 20 requests per 10 minutes per IP (`express-rate-limit`, no per-caller token to key on since this is a single-user bot), then signature is verified via `validateSignature` (`auth.js`)
 2. 200 OK is sent immediately (Vonage requires fast acknowledgment)
 3. `receiveMessage` validates the sender phone number, sanitizes text or fetches media
 4. `getTaskHistory` retrieves or creates an active MongoDB task (conversation context)
@@ -21,6 +21,7 @@ GuiDo is a WhatsApp AI assistant. Incoming WhatsApp messages arrive via a Vonage
 | File | Role |
 |---|---|
 | `app.js` | Express server, webhook route, orchestration loop |
+| `auth.js` | Validates the Vonage webhook signature |
 | `llmCaller.js` | Gemini API calls, Langfuse tracing, tool registry + dispatch loop |
 | `messageHandler.js` | Vonage integration, message parsing, media handling |
 | `databaseHandler.js` | MongoDB task CRUD, conversation history |
