@@ -3,6 +3,7 @@ import {GoogleGenAI, FunctionCallingConfigMode} from "@google/genai";
 import {startActiveObservation, startObservation} from "@langfuse/tracing";
 import {getPrompt} from "./promptFetcher.js";
 import * as Sentry from "@sentry/node";
+import {reportError} from "./utils/reportError.js";
 import {
     definition as createCalendarEventDef,
     handler as createCalendarEventHandler,
@@ -151,46 +152,44 @@ export async function callLLM(message) {
                     break;
                 }
 
-                // Get the tool
-                const toolCall = currentResponse.functionCalls[0];
+                // Gemini may return multiple parallel calls in one turn (e.g. "add to calendar and split the bill") - handle all of them, not just the first
+                const toolCalls = currentResponse.functionCalls;
+                const toolResponse = [];
 
-                // Create tool observation
-                const toolObs = startObservation(`tool-${toolCall.name}`,
-                    {input: toolCall.args},
-                    {asType: "tool"},
-                );
-                
-                // Execute the tool
-                const handler = toolHandlers[toolCall.name];
-                if (!handler) throw new Error(`Unknown tool: ${toolCall.name}`);
+                for (const toolCall of toolCalls) {
+                    // Create tool observation
+                    const toolObs = startObservation(`tool-${toolCall.name}`,
+                        {input: toolCall.args},
+                        {asType: "tool"},
+                    );
 
-                let toolResult;
-                try {
-                    toolResult = await handler(toolCall.args);
-                } catch (error) {
-                    Sentry.withScope((scope) => {
-                        scope.setTag("operation", "handleTool");
-                        scope.setContext("payload", {
-                            toolName: toolCall.name,
-                            toolCall: toolCall.args,
+                    // Execute the tool
+                    const handler = toolHandlers[toolCall.name];
+                    if (!handler) throw new Error(`Unknown tool: ${toolCall.name}`);
+
+                    let toolResult;
+                    try {
+                        toolResult = await handler(toolCall.args);
+                    } catch (error) {
+                        reportError("handleTool", error, {
+                            context: {toolName: toolCall.name, toolCall: toolCall.args},
                         });
-                        Sentry.captureException(error);
+                        toolResult = `Error calling tool ${toolCall.name}: ${error.message}`;
+                    }
+                    if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
+                    toolResponse.push({
+                        functionResponse: {
+                            name: toolCall.name,
+                            response: toolResult,
+                        },
                     });
-                    toolResult = `Error calling tool ${toolCall.name}`;
+
+                    // Update tool observation
+                    toolObs.update({output: toolResult});
+                    toolObs.end();
                 }
-                if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
-                const toolResponse = [{
-                    functionResponse: {
-                        name: toolCall.name,
-                        response: toolResult,
-                    },
-                }];
 
-                // Update tool observation
-                toolObs.update({output: toolResult});
-                toolObs.end();
-
-                // Create observation for processing tool result
+                // Create observation for processing tool results
                 const toolFollowUpObs = startObservation("llm-followup",
                     {
                         model: modelConfig.model,
@@ -199,7 +198,7 @@ export async function callLLM(message) {
                     {asType: "generation"},
                 );
 
-                // Send tool result to model
+                // Send tool results to model
                 currentResponse = await chat.sendMessage({message: toolResponse});
 
                 // Update tool result processing observation
@@ -227,14 +226,14 @@ export async function callLLM(message) {
             };
 
         } catch (error) {
-            Sentry.withScope((scope) => {
-                scope.setTag("operation", "callLLM");
-                scope.setContext("payload", {
+            // Preserve a more specific userMessage set upstream (e.g. by getPrompt) instead of overwriting it
+            reportError("callLLM", error, {
+                context: {
                     taskHistory: message.taskHistory,
                     messageType: message.type,
                     messageID: message.id,
-                });
-                Sentry.captureException(error);
+                },
+                userMessage: error.userMessage ?? "❌ LLM call error",
             });
 
             // Update trace with error
@@ -243,8 +242,6 @@ export async function callLLM(message) {
                 statusMessage: error.message,
             });
 
-            // Rethrow to show user a message
-            error.userMessage = "❌ LLM call error";
             throw error;
         }
     });

@@ -3,7 +3,7 @@ import {Type} from "@google/genai";
 
 // Tool definition
 export const definition = {
-    name: "completeTask", // TODO: add to prompt
+    name: "completeTask",
     description: "Completes the task at hand by updating its status in the database",
     parameters: {
         type: Type.OBJECT,

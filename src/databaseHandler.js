@@ -1,6 +1,7 @@
 // Imports
 import {MongoClient, ServerApiVersion} from "mongodb";
 import * as Sentry from "@sentry/node";
+import {reportError} from "./utils/reportError.js";
 
 // Database connection config with Stable API version
 const mongoOptions = {
@@ -30,10 +31,15 @@ try {
     // Get task collection
     tasks = mongoConnection.db(process.env.ENV).collection("tasks");
 
+    // Enforce at most one active task at a time (single-user bot) - backs the upsert race guard below
+    await tasks.createIndex({status: 1}, {unique: true, partialFilterExpression: {status: "in_progress"}});
+
     console.log("Database connection established");
+    Sentry.logger.info("Database connection established");
 
 } catch (error) {
     console.error("Failed to established database connection");
+    Sentry.logger.error("Failed to establish database connection", {error: error.message});
 
     // Rethrow to stop execution
     throw error;
@@ -46,9 +52,11 @@ export async function cleanupDatabase() {
             await mongoConnection.close();
             mongoConnection = null;
             console.log("Database connection shut down");
+            Sentry.logger.info("Database connection shut down");
 
         } catch (error) {
             console.error("Failed to shut down database connection");
+            Sentry.logger.error("Failed to shut down database connection", {error: error.message});
 
             // Rethrow to send correct exit code
             throw error;
@@ -89,54 +97,51 @@ function prepareForStorage(message, timestamp) {
     return [userMessage, modelMessage];
 }
 
-// TODO: find-then-insert is not atomic — will need to handle when implementing queuing/successive message handling
-export async function getTaskHistory(timestamp) {
+// Atomically find the active task or create one, closing the race between two near-simultaneous messages
+async function getOrCreateActiveTask(timestamp) {
     try {
-        // Check for task in progress
-        const activeTask = await tasks.findOne(
+        return await tasks.findOneAndUpdate(
             {status: "in_progress"},
-            {projection: { // Restrict fields to be returned
-                messages: 1,
-                _id: 1,
-            }},
-        );
-
-        // An active task exists
-        if (activeTask) {
-            // Prepare task history for LLM call
-            const taskHistory = prepareForLLM(activeTask.messages);
-
-            return {
-                taskHistory,
-                taskID: activeTask._id,
-            };
-        
-        // No active task, create a new one
-        } else {
-            // Create a new task
-            const newTask = await tasks.insertOne({
+            {$setOnInsert: {
                 started: timestamp,
                 updated: timestamp,
                 status: "in_progress",
                 messages: [],
-            });
+            }},
+            {
+                upsert: true,
+                returnDocument: "after",
+                projection: {messages: 1, _id: 1}, // Restrict fields to be returned
+            },
+        );
 
-            // Return empty task history and new ID
-            return {
-                taskHistory: [],
-                taskID: newTask.insertedId,
-            };
-        }
-    
     } catch (error) {
-        Sentry.withScope((scope) => {
-            scope.setTag("operation", "getTaskHistory");
-            Sentry.captureException(error);
-        });
+        // Two requests raced the upsert - the other one won, just fetch what it created
+        if (error.code === 11000) {
+            return tasks.findOne(
+                {status: "in_progress"},
+                {projection: {messages: 1, _id: 1}},
+            );
+        }
 
-        // Rethrow to show user a message
-        error.userMessage = "❌ Database error";
         throw error;
+    }
+}
+
+export async function getTaskHistory(timestamp) {
+    try {
+        const activeTask = await getOrCreateActiveTask(timestamp);
+
+        // Prepare task history for LLM call
+        const taskHistory = prepareForLLM(activeTask.messages);
+
+        return {
+            taskHistory,
+            taskID: activeTask._id,
+        };
+
+    } catch (error) {
+        throw reportError("getTaskHistory", error, {userMessage: "❌ Database error"});
     }
 }
 
@@ -159,17 +164,9 @@ export async function updateTaskHistory(message, taskID, taskStatus, timestamp =
         await tasks.updateOne({_id: taskID}, updateTask);
 
     } catch (error) {
-        Sentry.withScope((scope) => {
-            scope.setTag("operation", "updateTaskHistory");
-            scope.setContext("payload", {
-                taskID,
-                message,
-            });
-            Sentry.captureException(error);
+        throw reportError("updateTaskHistory", error, {
+            context: {taskID, message},
+            userMessage: "❌ Database error",
         });
-
-        // Rethrow to show user a message
-        error.userMessage = "❌ Database error";
-        throw error;
     }
 }
