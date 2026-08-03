@@ -31,6 +31,9 @@ jobs:
       - name: Install CLI tools
         run: npm install --save-dev esbuild@latest terser@latest
 
+      - name: Record commit hash for startup.js to read at runtime
+        run: echo "${GITHUB_SHA::7}" > src/commit.txt
+
       - name: Build with esbuild
         run: npm run build
 
@@ -47,6 +50,7 @@ jobs:
             -path "./src" -o \
             -path "./src/startup.js" -o \
             -path "./src/startup.js.map" -o \
+            -path "./src/commit.txt" -o \
             -path "./.infisical.json" -o \
             -path "./package-lock.json" -o \
             -path "./package.json" \
