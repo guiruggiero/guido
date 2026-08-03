@@ -38,6 +38,29 @@ export const definition = {
                 enum: ["default", "shared"],
                 description: "Calendar to add the event to: 'default' for Gui's personal calendar, 'shared' for the calendar shared with Georgia. Defaults to 'default' if not mentioned.",
             },
+            reminders: {
+                type: Type.ARRAY,
+                description: "Custom reminders, only if explicitly requested (e.g. 'remind me 1 day before'). Omit to use the calendar's default reminders.",
+                items: {
+                    type: Type.OBJECT,
+                    properties: {
+                        method: {
+                            type: Type.STRING,
+                            enum: ["email", "popup"],
+                            description: "How to be reminded",
+                        },
+                        minutes: {
+                            type: Type.NUMBER,
+                            description: "Minutes before the event start to send the reminder",
+                        },
+                    },
+                    required: ["method", "minutes"],
+                },
+            },
+            isSpecialProject: {
+                type: Type.BOOLEAN,
+                description: "Set to true only if Gui explicitly calls this out as a special project (colors the event distinctly on the calendar). Defaults to false.",
+            },
         },
         required: ["title", "start", "end", "timeZone"],
     },
@@ -53,6 +76,8 @@ export const handler = async (args) => {
         location: args.location,
         description: args.description,
         calendar: args.calendar,
+        reminders: args.reminders,
+        isSpecialProject: args.isSpecialProject,
     });
 
     return {
