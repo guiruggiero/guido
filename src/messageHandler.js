@@ -5,6 +5,7 @@ import {writeFile} from "node:fs/promises";
 import * as Sentry from "@sentry/node";
 import {Vonage} from "@vonage/server-sdk";
 import {Channels} from "@vonage/messages";
+import {reportError} from "./utils/reportError.js";
 
 // Sanitize text message
 function sanitizeText(messageText) {
@@ -56,19 +57,10 @@ async function getMedia(mediaURL, messageID, extension) {
         return buffer.toString("base64");
 
     } catch (error) {
-        Sentry.withScope((scope) => {
-            scope.setTag("operation", "getMedia");
-            scope.setContext("payload", {
-                mediaURL,
-                messageID,
-                extension,
-            });
-            Sentry.captureException(error);
+        throw reportError("getMedia", error, {
+            context: {mediaURL, messageID, extension},
+            userMessage: "❌ Media processing error",
         });
-
-        // Rethrow to show user a message
-        error.userMessage = "❌ Media processing error";
-        throw error;
     }
 }
 
@@ -132,14 +124,9 @@ export async function sendMessage(messageText) {
         });
     
     } catch (error) {
-        Sentry.withScope((scope) => {
-            scope.setTag("operation", "sendMessage");
-            scope.setContext("payload", {messageText});
-            Sentry.captureException(error);
+        throw reportError("sendMessage", error, {
+            context: {messageText},
+            userMessage: "❌ Message sending error",
         });
-
-        // Rethrow to show user a message
-        error.userMessage = "❌ Message sending error";
-        throw error;
     }
 }

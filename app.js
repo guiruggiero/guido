@@ -8,6 +8,7 @@ import {getTaskHistory, updateTaskHistory, cleanupDatabase} from "./src/database
 import {callLLM} from "./src/llmCaller.js";
 import * as Sentry from "@sentry/node";
 import {sdk} from "./src/startup.js";
+import {reportError} from "./src/utils/reportError.js";
 
 // Express app
 const app = express();
@@ -62,13 +63,11 @@ app.post(process.env.APP_PATH, webhookRateLimit, async (req, res) => {
 
         // Unhandled error
         if (!error.userMessage) {
-            Sentry.withScope((scope) => {
-                scope.setTag("operation", "unknown");
-                Sentry.captureException(error);
-            });
-
-            error.userMessage = "❌ Unknown error";
+            reportError("unknown", error, {userMessage: "❌ Unknown error"});
         }
+
+        // Auth failures never get a reply - an unauthenticated caller shouldn't be able to make the bot message its owner
+        if (error.isAuthError) return;
 
         // Send friendly error message to user
         try {await sendMessage(error.userMessage);}

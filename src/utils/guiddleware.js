@@ -1,5 +1,6 @@
 // Imports
 import {createRetryClient} from "./axiosClient.js";
+import {reportError} from "./reportError.js";
 
 // Axios instance for Guiddleware
 const guiddlewareClient = createRetryClient({
@@ -13,8 +14,16 @@ const guiddlewareClient = createRetryClient({
 
 // Creates a Google Task
 export const createTask = async (payload) => {
-    const res = await guiddlewareClient.post("/tasks", payload);
-    return res.data;
+    try {
+        const res = await guiddlewareClient.post("/tasks", payload);
+        return res.data;
+
+    } catch (error) {
+        throw reportError("guiddleware.createTask", error, {
+            context: {payload, status: error.response?.status, responseBody: error.response?.data},
+            userMessage: "❌ Task creation error",
+        });
+    }
 };
 
 // Creates a Splitwise expense; resolution/fallback logic lives in Guiddleware
@@ -25,6 +34,14 @@ export const createExpense = async (payload) => {
 
 // Creates a Google Calendar event
 export const createCalendarEvent = async (payload) => {
-    const res = await guiddlewareClient.post("/calendar/events", payload);
-    return res.data;
+    try {
+        const res = await guiddlewareClient.post("/calendar/events", payload);
+        return res.data;
+
+    } catch (error) {
+        throw reportError("guiddleware.createCalendarEvent", error, {
+            context: {payload, status: error.response?.status, responseBody: error.response?.data},
+            userMessage: "❌ Calendar event creation error",
+        });
+    }
 };

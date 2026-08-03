@@ -15,6 +15,9 @@ export function validateSignature(request) {
             reason: authHeader ? "Invalid signature" : "No signature",
         });
 
-        throw new Error(authHeader ? "Invalid signature" : "No signature");
+        const error = new Error(authHeader ? "Invalid signature" : "No signature");
+        error.userMessage = "❌ Unauthorized";
+        error.isAuthError = true; // Flags app.js to skip replying to an unauthenticated caller
+        throw error;
     }
 }
