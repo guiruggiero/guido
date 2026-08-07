@@ -65,3 +65,5 @@ Triggered by pushing to the `prod` branch (or manual dispatch via `.github/workf
 3. Server pulls from `prod-min` and restarts via PM2
 
 **Sentry:** Errors logged to the `guido` project (`GUIDO-*` issue IDs).
+
+**SonarQube Cloud**: project key `guiruggiero_guido`.
