@@ -73,10 +73,18 @@ export async function receiveMessage(messageBody) {
         return {validation: "⚠️ Unauthorized"};
     }
 
+    // Validate timestamp before it flows into the database query
+    const timestamp = new Date(messageBody.timestamp);
+    if (isNaN(timestamp.getTime())) {
+        Sentry.logger.warn("Invalid message timestamp", {timestamp: messageBody.timestamp});
+
+        return {validation: "⚠️ Invalid timestamp"};
+    }
+
     // Extract relevant data from message
     let message = {
         id: messageBody.message_uuid,
-        timestamp: new Date(messageBody.timestamp),
+        timestamp,
         type: messageBody.message_type,
     };
 
