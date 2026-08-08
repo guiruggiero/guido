@@ -47,16 +47,10 @@ Sentry.init({
     dsn: process.env.SENTRY_DSN,
     release: process.env.CURRENT_COMMIT,
     environment: process.env.ENV,
-    sendDefaultPii: true,
+    dataCollection: {userInfo: false, cookies: false},
     tracesSampleRate: 1.0,
     enableLogs: true,
-    integrations: [
-        Sentry.mongoIntegration(),
-        Sentry.googleGenAIIntegration({
-            recordInputs: true,
-            recordOutputs: true,
-        }),
-    ],
+    integrations: [Sentry.mongoIntegration()],
 });
 
 console.log("Error tracking instrumented");
