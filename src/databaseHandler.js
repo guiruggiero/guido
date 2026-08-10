@@ -32,13 +32,24 @@ try {
     tasks = mongoConnection.db(process.env.ENV).collection("tasks");
 
     // Enforce at most one active task at a time (single-user bot) - backs the upsert race guard below
+    const duplicateInProgress = await tasks.aggregate([
+        {$match: {status: "in_progress"}},
+        {$group: {_id: "$status", count: {$sum: 1}}},
+        {$match: {count: {$gt: 1}}},
+    ]).toArray();
+    if (duplicateInProgress.length > 0) {
+        const error = new Error(`Found ${duplicateInProgress[0].count} tasks with status "in_progress" - resolve duplicates before the unique index can be created`);
+        reportError("createTasksIndex", error, {context: {count: duplicateInProgress[0].count}});
+        throw error;
+    }
+    
     await tasks.createIndex({status: 1}, {unique: true, partialFilterExpression: {status: "in_progress"}});
 
     console.log("Database connection established");
     Sentry.logger.info("Database connection established");
 
 } catch (error) {
-    console.error("Failed to established database connection");
+    console.error("Failed to establish database connection:", error.message);
     Sentry.logger.error("Failed to establish database connection", {error: error.message});
 
     // Rethrow to stop execution

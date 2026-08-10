@@ -14,7 +14,7 @@ function sanitizeText(messageText) {
 
     // Remove whitespace from both ends
     sanitizedMessage = sanitizedMessage.trim();
-    
+
     // Remove HTML tags and attributes
     sanitizedMessage = sanitizeHtml(sanitizedMessage, {
         allowedTags: [],
@@ -31,7 +31,7 @@ async function getMedia(mediaURL, messageID, extension) {
         const parsedUrl = new URL(mediaURL);
         if (!parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
 
-        // Get media 
+        // Get media
         const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
         const response = await fetch(parsedUrl.href);
 
@@ -130,7 +130,7 @@ export async function sendMessage(messageText) {
             messageType: "text",
             text: messageText,
         });
-    
+
     } catch (error) {
         throw reportError("sendMessage", error, {
             context: {messageText},

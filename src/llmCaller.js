@@ -152,11 +152,10 @@ export async function callLLM(message) {
                     break;
                 }
 
-                // Gemini may return multiple parallel calls in one turn (e.g. "add to calendar and split the bill") - handle all of them, not just the first
+                // Gemini may return multiple parallel calls in one turn (e.g. "add to calendar and split the bill") - run them concurrently, not sequentially, since each is typically its own network round-trip
                 const toolCalls = currentResponse.functionCalls;
-                const toolResponse = [];
 
-                for (const toolCall of toolCalls) {
+                const toolResults = await Promise.all(toolCalls.map(async (toolCall) => {
                     // Create tool observation
                     const toolObs = startObservation(`tool-${toolCall.name}`,
                         {input: toolCall.args},
@@ -176,18 +175,24 @@ export async function callLLM(message) {
                         });
                         toolResult = `Error calling tool ${toolCall.name}: ${error.message}`;
                     }
-                    if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
-                    toolResponse.push({
-                        functionResponse: {
-                            name: toolCall.name,
-                            response: toolResult,
-                        },
-                    });
 
                     // Update tool observation
                     toolObs.update({output: toolResult});
                     toolObs.end();
-                }
+
+                    return {toolCall, toolResult};
+                }));
+
+                // toolResults preserves toolCalls order (Promise.all guarantee), so functionResponse matching stays correct
+                const toolResponse = toolResults.map(({toolCall, toolResult}) => {
+                    if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
+                    return {
+                        functionResponse: {
+                            name: toolCall.name,
+                            response: toolResult,
+                        },
+                    };
+                });
 
                 // Create observation for processing tool results
                 const toolFollowUpObs = startObservation("llm-followup",

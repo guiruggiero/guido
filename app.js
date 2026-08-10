@@ -6,9 +6,9 @@ import {validateSignature} from "./src/auth.js";
 import {receiveMessage, sendMessage} from "./src/messageHandler.js";
 import {getTaskHistory, updateTaskHistory, cleanupDatabase} from "./src/databaseHandler.js";
 import {callLLM} from "./src/llmCaller.js";
+import {reportError} from "./src/utils/reportError.js";
 import * as Sentry from "@sentry/node";
 import {sdk} from "./src/startup.js";
-import {reportError} from "./src/utils/reportError.js";
 
 // Express app
 const app = express();
