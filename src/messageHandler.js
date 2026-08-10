@@ -1,11 +1,11 @@
 // Imports
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
-import {writeFile} from "node:fs/promises";
 import * as Sentry from "@sentry/node";
+import {writeFile} from "node:fs/promises";
+import {reportError} from "./utils/reportError.js";
 import {Vonage} from "@vonage/server-sdk";
 import {Channels} from "@vonage/messages";
-import {reportError} from "./utils/reportError.js";
 
 // Sanitize text message
 function sanitizeText(messageText) {
@@ -14,7 +14,7 @@ function sanitizeText(messageText) {
 
     // Remove whitespace from both ends
     sanitizedMessage = sanitizedMessage.trim();
-
+    
     // Remove HTML tags and attributes
     sanitizedMessage = sanitizeHtml(sanitizedMessage, {
         allowedTags: [],
@@ -31,12 +31,12 @@ async function getMedia(mediaURL, messageID, extension) {
         const parsedUrl = new URL(mediaURL);
         if (!parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
 
-        // Get media
+        // Get media 
         const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
         const response = await fetch(parsedUrl.href);
 
         // Validate file size — TODO: byteLength check below may be redundant for trusted Vonage CDN
-        const contentLength = parseInt(response.headers.get("content-length"), 10);
+        const contentLength = Number.parseInt(response.headers.get("content-length"), 10);
         if (contentLength > MAX_MEDIA_SIZE) {
             Sentry.logger.error("Media file too large", {contentLength, messageID});
             throw new Error("Media file too large");
@@ -75,7 +75,7 @@ export async function receiveMessage(messageBody) {
 
     // Validate timestamp before it flows into the database query
     const timestamp = new Date(messageBody.timestamp);
-    if (isNaN(timestamp.getTime())) {
+    if (Number.isNaN(timestamp.getTime())) {
         Sentry.logger.warn("Invalid message timestamp", {timestamp: messageBody.timestamp});
 
         return {validation: "⚠️ Invalid timestamp"};
@@ -130,7 +130,7 @@ export async function sendMessage(messageText) {
             messageType: "text",
             text: messageText,
         });
-
+    
     } catch (error) {
         throw reportError("sendMessage", error, {
             context: {messageText},

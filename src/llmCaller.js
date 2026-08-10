@@ -65,6 +65,96 @@ const modelConfig = {
     },
 };
 
+// Executes one round of tool calls concurrently
+async function executeToolCalls(toolCalls) {
+    const toolResults = await Promise.all(toolCalls.map(async (toolCall) => {
+        // Create tool observation
+        const toolObs = startObservation(`tool-${toolCall.name}`,
+            {input: toolCall.args},
+            {asType: "tool"},
+        );
+
+        // Execute the tool
+        const handler = toolHandlers[toolCall.name];
+        if (!handler) throw new Error(`Unknown tool: ${toolCall.name}`);
+
+        let toolResult;
+        try {
+            toolResult = await handler(toolCall.args);
+        } catch (error) {
+            reportError("handleTool", error, {
+                context: {toolName: toolCall.name, toolCall: toolCall.args},
+            });
+            toolResult = `Error calling tool ${toolCall.name}: ${error.message}`;
+        }
+
+        // Update tool observation
+        toolObs.update({output: toolResult});
+        toolObs.end();
+
+        return {toolCall, toolResult};
+    }));
+
+    let taskStatus;
+    // toolResults preserves toolCalls order
+    const toolResponse = toolResults.map(({toolCall, toolResult}) => {
+        if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
+        return {
+            functionResponse: {
+                name: toolCall.name,
+                response: toolResult,
+            },
+        };
+    });
+
+    return {toolResponse, taskStatus};
+}
+
+// Runs the tool-call loop until it stops calling tools or iteration cap
+async function runToolLoop(chat, initialResponse) {
+    const MAX_TOOL_ITERATIONS = 10;
+    let currentResponse = initialResponse;
+    let taskStatus;
+    let iterations = 0;
+
+    while (currentResponse?.functionCalls && currentResponse.functionCalls.length > 0) {
+        if (++iterations > MAX_TOOL_ITERATIONS) {
+            Sentry.logger.warn("Tool loop iteration limit reached", {iterations});
+            break;
+        }
+
+        // Run multiple calls concurrently, not sequentially
+        const {toolResponse, taskStatus: newStatus} =
+            await executeToolCalls(currentResponse.functionCalls);
+        if (newStatus) taskStatus = newStatus;
+
+        // Create observation for processing tool results
+        const toolFollowUpObs = startObservation("llm-followup",
+            {
+                model: modelConfig.model,
+                input: toolResponse,
+            },
+            {asType: "generation"},
+        );
+
+        // Send tool results to model
+        currentResponse = await chat.sendMessage({message: toolResponse});
+
+        // Update tool result processing observation
+        toolFollowUpObs.update({
+            output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
+            usage: currentResponse.usageMetadata ? {
+                input: currentResponse.usageMetadata.promptTokenCount,
+                output: currentResponse.usageMetadata.candidatesTokenCount,
+                total: currentResponse.usageMetadata.totalTokenCount,
+            } : undefined,
+        });
+        toolFollowUpObs.end();
+    }
+
+    return {finalResponse: currentResponse, taskStatus};
+}
+
 // Call LLM
 export async function callLLM(message) {
     return await startActiveObservation("llm-interaction", async (trace) => {
@@ -84,7 +174,7 @@ export async function callLLM(message) {
             // Get model prompt
             const instructions = await getPrompt({ // Prompt variable
                 today: (message.timestamp).toLocaleDateString("en-US", {day: "numeric", month: "long", year: "numeric", timeZone: "America/Los_Angeles"}),
-                time: (message.timestamp).toLocaleTimeString("en-US", {hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles"}), // FIXME: get time zone at runtime
+                time: (message.timestamp).toLocaleTimeString("en-US", {hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles"}), // TODO: get time zone at runtime
             });
 
             // Initialize chat with task history and prompt
@@ -141,87 +231,14 @@ export async function callLLM(message) {
                 return {response: response.candidates?.[0]?.content?.parts?.[0]?.text ?? ""};
             }
 
-            // Handle tool calls in sequence (compositional)
-            const MAX_TOOL_ITERATIONS = 10;
-            let currentResponse = response;
-            let taskStatus;
-            let iterations = 0;
-            while (currentResponse?.functionCalls && currentResponse.functionCalls.length > 0) {
-                if (++iterations > MAX_TOOL_ITERATIONS) {
-                    Sentry.logger.warn("Tool loop iteration limit reached", {iterations});
-                    break;
-                }
-
-                // Gemini may return multiple parallel calls in one turn (e.g. "add to calendar and split the bill") - run them concurrently, not sequentially, since each is typically its own network round-trip
-                const toolCalls = currentResponse.functionCalls;
-
-                const toolResults = await Promise.all(toolCalls.map(async (toolCall) => {
-                    // Create tool observation
-                    const toolObs = startObservation(`tool-${toolCall.name}`,
-                        {input: toolCall.args},
-                        {asType: "tool"},
-                    );
-
-                    // Execute the tool
-                    const handler = toolHandlers[toolCall.name];
-                    if (!handler) throw new Error(`Unknown tool: ${toolCall.name}`);
-
-                    let toolResult;
-                    try {
-                        toolResult = await handler(toolCall.args);
-                    } catch (error) {
-                        reportError("handleTool", error, {
-                            context: {toolName: toolCall.name, toolCall: toolCall.args},
-                        });
-                        toolResult = `Error calling tool ${toolCall.name}: ${error.message}`;
-                    }
-
-                    // Update tool observation
-                    toolObs.update({output: toolResult});
-                    toolObs.end();
-
-                    return {toolCall, toolResult};
-                }));
-
-                // toolResults preserves toolCalls order (Promise.all guarantee), so functionResponse matching stays correct
-                const toolResponse = toolResults.map(({toolCall, toolResult}) => {
-                    if (toolResult.taskStatus) taskStatus = toolResult.taskStatus;
-                    return {
-                        functionResponse: {
-                            name: toolCall.name,
-                            response: toolResult,
-                        },
-                    };
-                });
-
-                // Create observation for processing tool results
-                const toolFollowUpObs = startObservation("llm-followup",
-                    {
-                        model: modelConfig.model,
-                        input: toolResponse,
-                    },
-                    {asType: "generation"},
-                );
-
-                // Send tool results to model
-                currentResponse = await chat.sendMessage({message: toolResponse});
-
-                // Update tool result processing observation
-                toolFollowUpObs.update({
-                    output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
-                    usage: currentResponse.usageMetadata ? {
-                        input: currentResponse.usageMetadata.promptTokenCount,
-                        output: currentResponse.usageMetadata.candidatesTokenCount,
-                        total: currentResponse.usageMetadata.totalTokenCount,
-                    } : undefined,
-                });
-                toolFollowUpObs.end();
-            }
+            // Handle tool calls
+            const {finalResponse: currentResponse, taskStatus} =
+                await runToolLoop(chat, response);
 
             // Update trace with final output
             trace.update({
                 output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
-                metadata: {toolsUsed: taskStatus ? true : false},
+                metadata: {toolsUsed: !!taskStatus},
             });
 
             // No more tool calls
