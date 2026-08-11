@@ -1,6 +1,6 @@
 // Imports
 import {GoogleGenAI, FunctionCallingConfigMode} from "@google/genai";
-import {startActiveObservation, startObservation} from "@langfuse/tracing";
+import {startActiveObservation, startObservation, propagateAttributes} from "@langfuse/tracing";
 import {getPrompt} from "./promptFetcher.js";
 import * as Sentry from "@sentry/node";
 import {reportError} from "./utils/reportError.js";
@@ -129,7 +129,7 @@ async function runToolLoop(chat, initialResponse) {
         if (newStatus) taskStatus = newStatus;
 
         // Create observation for processing tool results
-        const toolFollowUpObs = startObservation("llm-followup",
+        const toolFollowUpObs = startObservation("llm-call-followup",
             {
                 model: modelConfig.model,
                 input: toolResponse,
@@ -138,18 +138,25 @@ async function runToolLoop(chat, initialResponse) {
         );
 
         // Send tool results to model
-        currentResponse = await chat.sendMessage({message: toolResponse});
+        try {
+            currentResponse = await chat.sendMessage({message: toolResponse});
 
-        // Update tool result processing observation
-        toolFollowUpObs.update({
-            output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
-            usage: currentResponse.usageMetadata ? {
-                input: currentResponse.usageMetadata.promptTokenCount,
-                output: currentResponse.usageMetadata.candidatesTokenCount,
-                total: currentResponse.usageMetadata.totalTokenCount,
-            } : undefined,
-        });
-        toolFollowUpObs.end();
+            // Update tool result processing observation
+            toolFollowUpObs.update({
+                output: currentResponse.candidates?.[0]?.content?.parts?.[0]?.text,
+                usageDetails: currentResponse.usageMetadata ? {
+                    input: currentResponse.usageMetadata.promptTokenCount,
+                    output: currentResponse.usageMetadata.candidatesTokenCount,
+                    total: currentResponse.usageMetadata.totalTokenCount,
+                } : undefined,
+            });
+            toolFollowUpObs.end();
+
+        } catch (error) {
+            toolFollowUpObs.update({level: "ERROR", statusMessage: error.message});
+            toolFollowUpObs.end();
+            throw error;
+        }
     }
 
     return {finalResponse: currentResponse, taskStatus};
@@ -157,6 +164,13 @@ async function runToolLoop(chat, initialResponse) {
 
 // Call LLM
 export async function callLLM(message) {
+    return await propagateAttributes(
+        {sessionId: String(message.taskID), traceName: "llm-interaction"},
+        () => callLLMTraced(message),
+    );
+}
+
+async function callLLMTraced(message) {
     return await startActiveObservation("llm-interaction", async (trace) => {
         // Update trace with metadata
         trace.update({
@@ -212,18 +226,26 @@ export async function callLLM(message) {
             );
 
             // Call LLM
-            const response = await chat.sendMessage({message: llmMessage});
+            let response;
+            try {
+                response = await chat.sendMessage({message: llmMessage});
 
-            // Update generation observation
-            generationObs.update({
-                output: response.candidates?.[0]?.content?.parts?.[0]?.text,
-                usage: response.usageMetadata ? {
-                    input: response.usageMetadata.promptTokenCount,
-                    output: response.usageMetadata.candidatesTokenCount,
-                    total: response.usageMetadata.totalTokenCount,
-                } : undefined,
-            });
-            generationObs.end();
+                // Update generation observation
+                generationObs.update({
+                    output: response.candidates?.[0]?.content?.parts?.[0]?.text,
+                    usageDetails: response.usageMetadata ? {
+                        input: response.usageMetadata.promptTokenCount,
+                        output: response.usageMetadata.candidatesTokenCount,
+                        total: response.usageMetadata.totalTokenCount,
+                    } : undefined,
+                });
+                generationObs.end();
+
+            } catch (error) {
+                generationObs.update({level: "ERROR", statusMessage: error.message});
+                generationObs.end();
+                throw error;
+            }
 
             // No tool calls
             if (!response?.functionCalls || response.functionCalls.length === 0) {

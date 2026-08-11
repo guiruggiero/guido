@@ -8,7 +8,7 @@ import {getTaskHistory, updateTaskHistory, cleanupDatabase} from "./src/database
 import {callLLM} from "./src/llmCaller.js";
 import {reportError} from "./src/utils/reportError.js";
 import * as Sentry from "@sentry/node";
-import {sdk} from "./src/startup.js";
+import {langfuseProvider} from "./src/startup.js";
 
 // Express app
 const app = express();
@@ -102,7 +102,7 @@ function gracefulShutdown() {
         console.log("Server shut down");
 
         // Flush observability traces and error events
-        await sdk.shutdown();
+        await langfuseProvider.shutdown();
         await Sentry.close(2000);
 
         // Shut down database
