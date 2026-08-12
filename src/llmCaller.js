@@ -24,6 +24,10 @@ import {
     definition as completeTaskDef,
     handler as completeTaskHandler,
 } from "./tools/completeTask.js";
+import {
+    definition as askClaudeCodeDef,
+    handler as askClaudeCodeHandler,
+} from "./tools/askClaudeCode.js";
 
 // Initialize Gemini client
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
@@ -35,6 +39,7 @@ const functionDeclarations = [
     addToSplitwiseDef,
     addToTasksDef,
     completeTaskDef,
+    askClaudeCodeDef,
 ];
 
 const toolHandlers = {
@@ -43,6 +48,7 @@ const toolHandlers = {
     [addToSplitwiseDef.name]: addToSplitwiseHandler,
     [addToTasksDef.name]: addToTasksHandler,
     [completeTaskDef.name]: completeTaskHandler,
+    [askClaudeCodeDef.name]: askClaudeCodeHandler,
 };
 
 // Model configuration

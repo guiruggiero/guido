@@ -39,6 +39,7 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 | `tools/addToSplitwise.js` | Adds expenses to Splitwise, via Guiddleware |
 | `tools/addToTasks.js` | Adds a to-do item to Google Tasks, via Guiddleware |
 | `tools/completeTask.js` | Marks a task as completed |
+| `tools/askClaudeCode.js` | Forwards a coding task/question to Claude Code, via the Claude Code Gateway |
 
 **Utilities** (under `src/utils/`):
 
@@ -46,6 +47,7 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 |---|---|
 | `utils/axiosClient.js` | HTTP retry client factory with exponential backoff |
 | `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`): `createTask(payload)`, `createExpense(payload)` (Splitwise), `createCalendarEvent(payload)` |
+| `utils/claudeCode.js` | Axios client for the Claude Code Gateway (`guiruggiero/guiddleware`, `claude-code/`, runs on code-server): `runPrompt(prompt)` |
 
 Splitwise and Google Calendar used to have their own local clients here (`utils/splitwise.js`, a Calendar stub) — both now go through Guiddleware instead, which also means `addToSplitwise` gained split/uneven-split support GuiDo never had before (previously solo-expense only).
 
@@ -53,7 +55,7 @@ Splitwise and Google Calendar used to have their own local clients here (`utils/
 
 **Media handling**: media files (image, audio, file) are fetched from Vonage and saved to `media/{messageId}.{ext}` on disk (TODO: migrate to Google Cloud Storage). In MongoDB, only the filename is stored as the message `content`, not the base64 data. When replaying history to the LLM, `prepareForLLM` formats media turns as `[type: filename]` (e.g., `[image: abc123.jpg]`).
 
-**Secrets** are managed by Infisical CLI (one environment, `dev`, used everywhere — the dev/prod split above is just a Langfuse prompt label, not a separate secret store). The app reads `process.env` for `VONAGE_*`, `GEMINI_API_KEY`, `MONGODB_URI`, `SENTRY_DSN`, `LANGFUSE_*`, `APP_PATH`, `EXPRESS_PORT`, `PHONE_NUMBER`, `GUIDDLEWARE_URL`, `GUIDDLEWARE_SECRET_GUIDO`.
+**Secrets** are managed by Infisical CLI (one environment, `dev`, used everywhere — the dev/prod split above is just a Langfuse prompt label, not a separate secret store). The app reads `process.env` for `VONAGE_*`, `GEMINI_API_KEY`, `MONGODB_URI`, `SENTRY_DSN`, `LANGFUSE_*`, `APP_PATH`, `EXPRESS_PORT`, `PHONE_NUMBER`, `GUIDDLEWARE_URL`, `GUIDDLEWARE_SECRET_GUIDO`, `CLAUDE_CODE_GATEWAY_URL`, `CLAUDE_CODE_GATEWAY_SECRET_GUIDO`.
 
 **Prompt management**: `prompt.md` is the system prompt managed via `scripts/promptSync.js` and excluded from regular commits. Always perform changes to the system prompt, but never consider it in the commit message. Scripts run via Infisical to inject `LANGFUSE_*` secrets.
 
