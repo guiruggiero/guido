@@ -40,13 +40,14 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 | `tools/addToTasks.js` | Adds a to-do item to Google Tasks, via Guiddleware |
 | `tools/completeTask.js` | Marks a task as completed |
 | `tools/askClaudeCode.js` | Forwards a coding task/question to Claude Code, via the Claude Code Gateway |
+| `tools/trackFlight.js` | Gets a FlightAware live-tracking link, via Guiddleware |
 
 **Utilities** (under `src/utils/`):
 
 | File | Role |
 |---|---|
 | `utils/axiosClient.js` | HTTP retry client factory with exponential backoff |
-| `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`): `createTask(payload)`, `createExpense(payload)` (Splitwise), `createCalendarEvent(payload)` |
+| `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`): `createTask(payload)`, `createExpense(payload)` (Splitwise), `createCalendarEvent(payload)`, `getFlightAwareUrl(flightNumber)` |
 | `utils/claudeCode.js` | Axios client for the Claude Code Gateway (`guiruggiero/guiddleware`, `claude-code/`, runs on code-server): `runPrompt(prompt)` |
 
 Splitwise and Google Calendar used to have their own local clients here (`utils/splitwise.js`, a Calendar stub) — both now go through Guiddleware instead, which also means `addToSplitwise` gained split/uneven-split support GuiDo never had before (previously solo-expense only).

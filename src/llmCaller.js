@@ -28,6 +28,10 @@ import {
     definition as askClaudeCodeDef,
     handler as askClaudeCodeHandler,
 } from "./tools/askClaudeCode.js";
+import {
+    definition as trackFlightDef,
+    handler as trackFlightHandler,
+} from "./tools/trackFlight.js";
 
 // Initialize Gemini client
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
@@ -40,6 +44,7 @@ const functionDeclarations = [
     addToTasksDef,
     completeTaskDef,
     askClaudeCodeDef,
+    trackFlightDef,
 ];
 
 const toolHandlers = {
@@ -49,6 +54,7 @@ const toolHandlers = {
     [addToTasksDef.name]: addToTasksHandler,
     [completeTaskDef.name]: completeTaskHandler,
     [askClaudeCodeDef.name]: askClaudeCodeHandler,
+    [trackFlightDef.name]: trackFlightHandler,
 };
 
 // Model configuration

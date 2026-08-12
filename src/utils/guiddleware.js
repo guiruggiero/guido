@@ -45,3 +45,17 @@ export const createCalendarEvent = async (payload) => {
         });
     }
 };
+
+// Gets a FlightAware live-tracking URL
+export const getFlightAwareUrl = async (flightNumber) => {
+    try {
+        const res = await guiddlewareClient.get("/flightaware/track", {params: {flightNumber}});
+        return res.data.url;
+
+    } catch (error) {
+        throw reportError("guiddleware.getFlightAwareUrl", error, {
+            context: {flightNumber, status: error.response?.status, responseBody: error.response?.data},
+            userMessage: "❌ Flight tracking error",
+        });
+    }
+};
