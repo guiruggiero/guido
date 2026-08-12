@@ -50,7 +50,7 @@
   "scripts": {
     "lint": "eslint .",
     "lint-fix": "eslint . --fix",
-    "dev": "infisical run -- nodemon --import ./src/startup.js app.js",
+    "dev": "APP_ENV=dev infisical run -- nodemon --import ./src/startup.js app.js",
     "tunnel": "ngrok start guido",
     "build": "esbuild app.js --bundle --format=esm --platform=node --packages=external --minify --sourcemap --outfile=dist/app.js",
     "minify": "terser ./src/startup.js --module --compress --mangle --source-map \"filename='./src/startup.js.map',url='startup.js.map'\" -o ./src/startup.js",

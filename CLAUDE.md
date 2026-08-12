@@ -49,7 +49,7 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 
 Splitwise and Google Calendar used to have their own local clients here (`utils/splitwise.js`, a Calendar stub) — both now go through Guiddleware instead, which also means `addToSplitwise` gained split/uneven-split support GuiDo never had before (previously solo-expense only).
 
-**Environment detection** (`startup.js`): hostname `"code-server"` → dev; otherwise → prod. This controls Langfuse prompt label (`"latest"` vs `"production"`).
+**Environment detection** (`startup.js`): `process.env.ENV` is `"dev"` only if `APP_ENV=dev` is set (the `dev` npm script does this); everything else, including the runtime-server (which sets nothing), is `"prod"`. Controls the Langfuse prompt label (`"latest"` vs `"production"`) and the Mongo database name, and informs Sentry and Langfuse tracing.
 
 **Media handling**: media files (image, audio, file) are fetched from Vonage and saved to `media/{messageId}.{ext}` on disk (TODO: migrate to Google Cloud Storage). In MongoDB, only the filename is stored as the message `content`, not the base64 data. When replaying history to the LLM, `prepareForLLM` formats media turns as `[type: filename]` (e.g., `[image: abc123.jpg]`).
 

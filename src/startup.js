@@ -3,7 +3,6 @@ import {execSync} from "node:child_process";
 import {readFileSync} from "node:fs";
 import {fileURLToPath} from "node:url";
 import path from "node:path";
-import os from "node:os";
 import * as Sentry from "@sentry/node";
 import {NodeTracerProvider} from "@opentelemetry/sdk-trace-node";
 import {LangfuseSpanProcessor} from "@langfuse/otel";
@@ -12,7 +11,7 @@ import {setLangfuseTracerProvider} from "@langfuse/tracing";
 // ESM path resolution
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// Get current commit hash from build-time file, fall back to git for local dev
+// Get current commit hash from build-time file, fall back to git for dev environment
 let currentCommit;
 try {
     currentCommit = readFileSync(path.join(__dirname, "commit.txt"), "utf-8").trim();
@@ -22,7 +21,7 @@ try {
         currentCommit = execSync("git rev-parse --short HEAD", {env: {PATH: "/usr/bin:/bin:/usr/local/bin"}}).toString().trim();
 
     } catch (error) {
-        // Sentry isn't initialized yet at this point, so this can only go to the console
+        // Sentry isn't initialized yet
         console.warn(`Failed to get current commit hash: ${error.message}`);
         currentCommit = "unknown";
     }
@@ -31,15 +30,7 @@ try {
 process.env.CURRENT_COMMIT = currentCommit;
 
 // Get current environment
-let hostname = "";
-try {
-    hostname = os.hostname();
-
-} catch (error) {
-    console.warn(`Failed to get hostname, defaulting to "prod": ${error.message}`);
-}
-
-process.env.ENV = hostname === "code-server" ? "dev" : "prod";
+process.env.ENV = process.env.APP_ENV === "dev" ? "dev" : "prod";
 
 // Instrument error tracking
 Sentry.init({
