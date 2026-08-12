@@ -32,6 +32,18 @@ import {
     definition as trackFlightDef,
     handler as trackFlightHandler,
 } from "./tools/trackFlight.js";
+import {
+    definition as getLockStatusDef,
+    handler as getLockStatusHandler,
+} from "./tools/getLockStatus.js";
+import {
+    definition as lockDoorDef,
+    handler as lockDoorHandler,
+} from "./tools/lockDoor.js";
+import {
+    definition as unlockDoorDef,
+    handler as unlockDoorHandler,
+} from "./tools/unlockDoor.js";
 
 // Initialize Gemini client
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
@@ -45,6 +57,9 @@ const functionDeclarations = [
     completeTaskDef,
     askClaudeCodeDef,
     trackFlightDef,
+    getLockStatusDef,
+    lockDoorDef,
+    unlockDoorDef,
 ];
 
 const toolHandlers = {
@@ -55,6 +70,9 @@ const toolHandlers = {
     [completeTaskDef.name]: completeTaskHandler,
     [askClaudeCodeDef.name]: askClaudeCodeHandler,
     [trackFlightDef.name]: trackFlightHandler,
+    [getLockStatusDef.name]: getLockStatusHandler,
+    [lockDoorDef.name]: lockDoorHandler,
+    [unlockDoorDef.name]: unlockDoorHandler,
 };
 
 // Model configuration
