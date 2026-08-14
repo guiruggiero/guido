@@ -44,13 +44,16 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 | `tools/getLockStatus.js` | Gets the front door lock's status, via Home Assistant |
 | `tools/lockDoor.js` | Locks the front door, via Home Assistant |
 | `tools/unlockDoor.js` | Unlocks the front door, via Home Assistant |
+| `tools/addToTrello.js` | Creates a Trello card, via Guiddleware |
+| `tools/searchTrelloCards.js` | Searches Trello card titles for an ID, via Guiddleware |
+| `tools/editTrelloCard.js` | Renames, notes, or moves an existing Trello card, via Guiddleware |
 
 **Utilities** (under `src/utils/`):
 
 | File | Role |
 |---|---|
 | `utils/axiosClient.js` | HTTP retry client factory with exponential backoff |
-| `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`): `createTask(payload)`, `createExpense(payload)` (Splitwise), `createCalendarEvent(payload)`, `getFlightAwareUrl(flightNumber)` |
+| `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`): `createTask(payload)`, `createExpense(payload)` (Splitwise), `createCalendarEvent(payload)`, `getFlightAwareUrl(flightNumber)`, `createTrelloCard(payload)`, `searchTrelloCards(query, limit?)`, `updateTrelloCard(id, payload)` |
 | `utils/claudeCode.js` | Axios client for the Claude Code Gateway (`guiruggiero/guiddleware`, `claude-code/`, runs on code-server): `runPrompt(prompt)` |
 | `utils/homeAssistant.js` | Axios client for Home Assistant's REST API, running as a Docker container on runtime-server (same box as GuiDo, loopback-only — not reached via Guiddleware): `getLockState()`, `lockDoor()`, `unlockDoor()` |
 

@@ -59,3 +59,45 @@ export const getFlightAwareUrl = async (flightNumber) => {
         });
     }
 };
+
+// Creates a Trello card
+export const createTrelloCard = async (payload) => {
+    try {
+        const res = await guiddlewareClient.post("/trello/cards", payload);
+        return res.data;
+
+    } catch (error) {
+        throw reportError("guiddleware.createTrelloCard", error, {
+            context: {payload, status: error.response?.status, responseBody: error.response?.data},
+            userMessage: "❌ Trello card creation error",
+        });
+    }
+};
+
+// Searches Trello card titles
+export const searchTrelloCards = async (query, limit) => {
+    try {
+        const res = await guiddlewareClient.get("/trello/cards/search", {params: {q: query, limit}});
+        return res.data.cards;
+
+    } catch (error) {
+        throw reportError("guiddleware.searchTrelloCards", error, {
+            context: {query, limit, status: error.response?.status, responseBody: error.response?.data},
+            userMessage: "❌ Trello search error",
+        });
+    }
+};
+
+// Updates a Trello card (rename, note, move)
+export const updateTrelloCard = async (id, payload) => {
+    try {
+        const res = await guiddlewareClient.patch(`/trello/cards/${id}`, payload);
+        return res.data;
+
+    } catch (error) {
+        throw reportError("guiddleware.updateTrelloCard", error, {
+            context: {id, payload, status: error.response?.status, responseBody: error.response?.data},
+            userMessage: "❌ Trello card update error",
+        });
+    }
+};

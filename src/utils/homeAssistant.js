@@ -2,8 +2,7 @@
 import {createRetryClient} from "./axiosClient.js";
 import {reportError} from "./reportError.js";
 
-// Axios instance for Home Assistant's REST API — runs on the same box (runtime-server),
-// loopback-only, no network exposure
+// Axios instance for Home Assistant API
 const haClient = createRetryClient({
     baseURL: process.env.HA_BASE_URL,
     timeout: 8000,
@@ -15,7 +14,7 @@ const haClient = createRetryClient({
 
 const lockEntityId = process.env.HA_LOCK_ENTITY_ID;
 
-// Gets the front door lock's current state: "locked" | "unlocked" | "unavailable"
+// Gets the door's state: "locked", "unlocked", "unavailable"
 export const getLockState = async () => {
     try {
         const res = await haClient.get(`/api/states/${lockEntityId}`);
@@ -29,7 +28,7 @@ export const getLockState = async () => {
     }
 };
 
-// Locks the front door
+// Locks the door
 export const lockDoor = async () => {
     try {
         await haClient.post("/api/services/lock/lock", {entity_id: lockEntityId});
@@ -42,7 +41,7 @@ export const lockDoor = async () => {
     }
 };
 
-// Unlocks the front door
+// Unlocks the door
 export const unlockDoor = async () => {
     try {
         await haClient.post("/api/services/lock/unlock", {entity_id: lockEntityId});

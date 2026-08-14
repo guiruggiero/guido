@@ -1,7 +1,7 @@
 // Import
 import * as Sentry from "@sentry/node";
 
-// Reports the first, most specific operation to Sentry with context and user-facing message
+// Reports the first, most specific operation to Sentry with context and user message
 export function reportError(operation, error, {context, userMessage} = {}) {
     if (!error.reported) {
         Sentry.withScope((scope) => {

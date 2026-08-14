@@ -44,6 +44,18 @@ import {
     definition as unlockDoorDef,
     handler as unlockDoorHandler,
 } from "./tools/unlockDoor.js";
+import {
+    definition as addToTrelloDef,
+    handler as addToTrelloHandler,
+} from "./tools/addToTrello.js";
+import {
+    definition as searchTrelloCardsDef,
+    handler as searchTrelloCardsHandler,
+} from "./tools/searchTrelloCards.js";
+import {
+    definition as editTrelloCardDef,
+    handler as editTrelloCardHandler,
+} from "./tools/editTrelloCard.js";
 
 // Initialize Gemini client
 const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
@@ -60,8 +72,10 @@ const functionDeclarations = [
     getLockStatusDef,
     lockDoorDef,
     unlockDoorDef,
+    addToTrelloDef,
+    searchTrelloCardsDef,
+    editTrelloCardDef,
 ];
-
 const toolHandlers = {
     [createCalendarEventDef.name]: createCalendarEventHandler,
     [summarizeDef.name]: summarizeHandler,
@@ -73,6 +87,9 @@ const toolHandlers = {
     [getLockStatusDef.name]: getLockStatusHandler,
     [lockDoorDef.name]: lockDoorHandler,
     [unlockDoorDef.name]: unlockDoorHandler,
+    [addToTrelloDef.name]: addToTrelloHandler,
+    [searchTrelloCardsDef.name]: searchTrelloCardsHandler,
+    [editTrelloCardDef.name]: editTrelloCardHandler,
 };
 
 // Model configuration
@@ -80,7 +97,7 @@ const modelConfig = {
     model: "gemini-flash-latest",
     config: {
         thinkingConfig: {
-            thinkingLevel: "low", // Or "minimal" or "medium"?
+            thinkingLevel: "low", // "low, "minimal", "medium"
         },
         tools: [
             {functionDeclarations},
