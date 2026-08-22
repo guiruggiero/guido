@@ -6,9 +6,9 @@
   "type": "module",
   "main": "app.js",
   "dependencies": {
-    "@google/genai": "^2.13.0",
-    "@langfuse/client": "^5.9.1",
-    "@langfuse/otel": "^5.9.1",
+    "@google/genai": "^2.17.1",
+    "@langfuse/client": "^5.10.1",
+    "@langfuse/otel": "^5.10.1",
     "@langfuse/tracing": "^5.0.1",
     "@opentelemetry/sdk-trace-node": "^2.10.0",
     "@sentry/node": "^10.68.0",
@@ -21,7 +21,7 @@
     "express-rate-limit": "^8.6.2",
     "helmet": "^8.2.0",
     "mongodb": "^7.5.0",
-    "sanitize-html": "^2.17.6"
+    "sanitize-html": "^2.17.7"
   },
   "githubDependencies": {
     "esbuild": "",
@@ -35,7 +35,7 @@
     "@stylistic/eslint-plugin": "^5.10.0",
     "eslint": "^10.8.0",
     "eslint-plugin-yml": "^3.8.1",
-    "globals": "^17.10.0",
+    "globals": "^17.11.0",
     "nodemon": "^3.1.14"
   },
   "nodemonConfig": {
