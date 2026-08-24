@@ -4,7 +4,7 @@ import {createCalendarEvent} from "../utils/guiddleware.js";
 
 // Tool definition
 export const definition = {
-    name: "createCalendarEvent",
+    name: "addToCalendar",
     description: "Creates a calendar event with title and time, location, and description",
     parameters: {
         type: Type.OBJECT,

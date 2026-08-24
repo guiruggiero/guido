@@ -9,19 +9,26 @@ import {fetchPrompt, createPromptVersion} from "../src/promptFetcher.js";
 // ESM path resolution
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const PROMPT_FILE = path.join(__dirname, "..", "prompt.md");
 
-// Pull: download production prompt from Langfuse and write to prompt.md
-const pull = async () => {
+// Maps Langfuse prompt name to its local file
+const PROMPT_FILES = {
+    GuiDo: path.join(__dirname, "..", "promptGuiDo.md"),
+    Guindex: path.join(__dirname, "..", "promptGuindex.md"),
+};
+
+// Downloads prompt and write to local file
+const pull = async (name) => {
+    const promptFile = PROMPT_FILES[name];
+
     // Read current local content before overwriting
     let localContent = null;
     try {
-        localContent = readFileSync(PROMPT_FILE, "utf-8");
+        localContent = readFileSync(promptFile, "utf-8");
     } catch {
         // File doesn't exist yet — skip diff
     }
 
-    const {prompt, version} = await fetchPrompt("GuiDo");
+    const {prompt, version} = await fetchPrompt(name);
 
     // Show diff between local and production
     if (localContent !== null) {
@@ -35,19 +42,25 @@ const pull = async () => {
         if (result.status === 0) console.log("(no changes)");
     }
 
-    writeFileSync(PROMPT_FILE, prompt);
-    console.log(`Pulled version ${version} to prompt.md`);
+    writeFileSync(promptFile, prompt);
+    console.log(`Pulled version ${version} to ${path.basename(promptFile)}`);
 };
 
-// Push: upload prompt.md to Langfuse as a new version (not production)
-const push = async () => {
-    const content = readFileSync(PROMPT_FILE, "utf-8");
-    const version = await createPromptVersion("GuiDo", content);
-    console.log(`Pushed prompt.md as version ${version} (not production)`);
+// Push: upload the local file to Langfuse as a new version (not production)
+const push = async (name) => {
+    const promptFile = PROMPT_FILES[name];
+    const content = readFileSync(promptFile, "utf-8");
+    const version = await createPromptVersion(name, content);
+    console.log(`Pushed ${path.basename(promptFile)} as version ${version} (not production)`);
 };
 
-// Run based on command-line argument
+// Run for every prompt based on command-line argument
 const command = process.argv[2];
-if (command === "pull") await pull();
-else if (command === "push") await push();
-else console.error("Usage: node scripts/promptSync.js pull|push");
+if (command === "pull" || command === "push") {
+    for (const name of Object.keys(PROMPT_FILES)) {
+        if (command === "pull") await pull(name);
+        else await push(name);
+    }
+} else {
+    console.error("Usage: node scripts/promptSync.js pull|push");
+}

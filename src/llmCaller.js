@@ -1,13 +1,13 @@
 // Imports
 import {GoogleGenAI, FunctionCallingConfigMode} from "@google/genai";
 import {startActiveObservation, startObservation, propagateAttributes} from "@langfuse/tracing";
-import {getPrompt} from "./promptFetcher.js";
+import {getGuiDoPrompt} from "./promptFetcher.js";
 import * as Sentry from "@sentry/node";
 import {reportError} from "./utils/reportError.js";
 import {
-    definition as createCalendarEventDef,
-    handler as createCalendarEventHandler,
-} from "./tools/createCalendarEvent.js";
+    definition as addToCalendarDef,
+    handler as addToCalendarHandler,
+} from "./tools/addToCalendar.js";
 import {
     definition as summarizeDef,
     handler as summarizeHandler,
@@ -17,9 +17,9 @@ import {
     handler as addToSplitwiseHandler,
 } from "./tools/addToSplitwise.js";
 import {
-    definition as addToTasksDef,
-    handler as addToTasksHandler,
-} from "./tools/addToTasks.js";
+    definition as addReminderDef,
+    handler as addReminderHandler,
+} from "./tools/addReminder.js";
 import {
     definition as completeTaskDef,
     handler as completeTaskHandler,
@@ -62,10 +62,10 @@ const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 
 // Tool registry
 const functionDeclarations = [
-    createCalendarEventDef,
+    addToCalendarDef,
     summarizeDef,
     addToSplitwiseDef,
-    addToTasksDef,
+    addReminderDef,
     completeTaskDef,
     askClaudeCodeDef,
     trackFlightDef,
@@ -77,10 +77,10 @@ const functionDeclarations = [
     editTrelloCardDef,
 ];
 const toolHandlers = {
-    [createCalendarEventDef.name]: createCalendarEventHandler,
+    [addToCalendarDef.name]: addToCalendarHandler,
     [summarizeDef.name]: summarizeHandler,
     [addToSplitwiseDef.name]: addToSplitwiseHandler,
-    [addToTasksDef.name]: addToTasksHandler,
+    [addReminderDef.name]: addReminderHandler,
     [completeTaskDef.name]: completeTaskHandler,
     [askClaudeCodeDef.name]: askClaudeCodeHandler,
     [trackFlightDef.name]: trackFlightHandler,
@@ -233,7 +233,7 @@ async function callLLMTraced(message) {
 
         try {
             // Get model prompt
-            const instructions = await getPrompt({ // Prompt variable
+            const instructions = await getGuiDoPrompt({ // Prompt variable
                 today: (message.timestamp).toLocaleDateString("en-US", {day: "numeric", month: "long", year: "numeric", timeZone: "America/Los_Angeles"}),
                 time: (message.timestamp).toLocaleTimeString("en-US", {hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles"}), // TODO: get time zone at runtime
             });
@@ -317,7 +317,7 @@ async function callLLMTraced(message) {
             };
 
         } catch (error) {
-            // Preserve a more specific userMessage set upstream (e.g. by getPrompt) instead of overwriting it
+            // Preserve a more specific userMessage set upstream instead of overwriting it
             reportError("callLLM", error, {
                 context: {
                     taskHistory: message.taskHistory,

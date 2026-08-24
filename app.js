@@ -2,10 +2,12 @@
 import express from "express";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
-import {validateSignature} from "./src/auth.js";
+import multer from "multer";
+import {validateWhatsAppAuth, validateIndexAuth} from "./src/auth.js";
 import {receiveMessage, sendMessage} from "./src/messageHandler.js";
 import {getTaskHistory, updateTaskHistory, cleanupDatabase} from "./src/databaseHandler.js";
 import {callLLM} from "./src/llmCaller.js";
+import {handleGuindex} from "./src/guindex.js";
 import {reportError} from "./src/utils/reportError.js";
 import * as Sentry from "@sentry/node";
 import {langfuseProvider} from "./src/startup.js";
@@ -14,21 +16,26 @@ import {langfuseProvider} from "./src/startup.js";
 const app = express();
 app.use(express.json({limit: "1mb"})); // POST request parser with size limit
 app.use(helmet()); // HTTP header security
+app.set("trust proxy", 1); // Trust exactly one hop (cloudflared) so rate limiting keys on the real client IP
 
-// Rate limiter (by IP)
-const webhookRateLimit = rateLimit({
-    limit: 20,
+// Parser for multipart/form-data type
+const upload = multer({limits: {fieldSize: 64 * 1024}});
+
+// Rate limiters (by IP), one bucket per endpoint
+const rateLimitConfig = {
     windowMs: 10 * 60 * 1000, // 10 minutes
     standardHeaders: true,
     legacyHeaders: false,
     handler: (req, res) => res.status(429).send("Too many requests"),
-});
+};
+const guidoRateLimit = rateLimit({...rateLimitConfig, limit: 20});
+const guindexRateLimit = rateLimit({...rateLimitConfig, limit: 20});
 
-// Inbound message endpoint
-app.post(process.env.APP_PATH, webhookRateLimit, async (req, res) => {
+// GuiDo endpoint
+app.post(process.env.APP_PATH, guidoRateLimit, async (req, res) => {
     try {
         // Validate message signature
-        validateSignature(req);
+        validateWhatsAppAuth(req);
 
         // Acknowledge receipt
         res.status(200).end();
@@ -66,7 +73,7 @@ app.post(process.env.APP_PATH, webhookRateLimit, async (req, res) => {
             reportError("unknown", error, {userMessage: "❌ Unknown error"});
         }
 
-        // Auth failures never get a reply - an unauthenticated caller shouldn't be able to make the bot message its owner
+        // Auth failures never get a reply
         if (error.isAuthError) return;
 
         // Send friendly error message to user
@@ -75,8 +82,19 @@ app.post(process.env.APP_PATH, webhookRateLimit, async (req, res) => {
     }
 });
 
-// App status endpoint
-app.get(process.env.APP_PATH, webhookRateLimit, (req, res) => {
+// Guindex transcription endpoint
+app.post("/guindex", guindexRateLimit, validateIndexAuth, upload.none(), (req, res) => { // No audio file
+    // Acknowledge receipt
+    res.status(200).end();
+
+    // Process async
+    const {transcription, recordedAt} = req.body ?? {}; // Undefined if the caller didn't send multipart
+    if (!transcription) return;
+    handleGuindex(transcription, recordedAt);
+});
+
+// Status endpoint
+app.get(process.env.APP_PATH, guidoRateLimit, (req, res) => {
     res.status(200).send(`GuiDo is up and running! (commit: <b>${process.env.CURRENT_COMMIT}</b>)`);
 });
 

@@ -13,27 +13,46 @@ const langfuse = new LangfuseClient({
 // Different prompts according to environment
 const label = process.env.ENV === "dev" ? "latest" : "production";
 
-// Download on startup to cache as fallback
-try {
-    await langfuse.prompt.get("GuiDo", {label: label});
-    console.log("Prompt downloaded");
-    Sentry.logger.info("Prompt downloaded");
+// Placeholder values to validate prompt compilation at startup
+const startupVariables = () => {
+    const now = new Date();
+    return {
+        today: now.toLocaleDateString("en-US", {day: "numeric", month: "long", year: "numeric", timeZone: "America/Los_Angeles"}),
+        time: now.toLocaleTimeString("en-US", {hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles"}),
+    };
+};
 
-} catch (error) {
-    console.error("Failed to download prompt");
-    Sentry.logger.error("Failed to download prompt", {error: error.message});
+// Fetch and compile all prompts on startup to warm the cache or fail fast
+const PROMPTS = ["GuiDo", "Guindex"];
+for (const name of PROMPTS) {
+    try {
+        const compiled = await loadPrompt(name, startupVariables());
 
-    // Rethrow to stop execution
-    throw error;
+        // Catch variables the app never provides before they reach a system instruction
+        const uncompiled = compiled.match(/{{\s*\w+\s*}}/g);
+        if (uncompiled) {
+            throw new Error(`Uncompiled variables: ${[...new Set(uncompiled)].join(", ")}`);
+        }
+
+        console.log(`${name} prompt downloaded and compiled`);
+        Sentry.logger.info(`${name} prompt downloaded and compiled`);
+
+    } catch (error) {
+        console.error(`Failed to load ${name} prompt`);
+        Sentry.logger.error(`Failed to load ${name} prompt`, {error: error.message});
+
+        // Rethrow to stop execution and not run on a broken prompt
+        throw error;
+    }
 }
-    
-// Fetch the production version of a prompt by name
+
+// Fetches raw prompt (for promptSync)
 export const fetchPrompt = async (name) => {
     const res = await langfuse.prompt.get(name);
     return {prompt: res.prompt, version: res.version};
 };
 
-// Create a new prompt version without setting it as production
+// Creates a new draft without publishing it
 export const createPromptVersion = async (name, content) => {
     const res = await langfuse.prompt.create({
         name,
@@ -44,11 +63,11 @@ export const createPromptVersion = async (name, content) => {
     return res.version;
 };
 
-// Get model prompt
-export async function getPrompt(variables = {}) {
-    const response = await langfuse.prompt.get("GuiDo", {
+// Fetches a prompt with cache and compiles variables
+async function loadPrompt(name, variables) {
+    const response = await langfuse.prompt.get(name, {
         cacheTtlSeconds: 180, // 3m cache
-        label: label,
+        label,
     });
 
     // Replace variables
@@ -56,10 +75,13 @@ export async function getPrompt(variables = {}) {
         return response.compile(variables);
 
     } catch (error) {
-        // Rethrow instead of falling back to the uncompiled prompt - that would leak raw {{variable}} syntax into the model's system instruction
-        throw reportError("getPrompt", error, {
-            context: {label, promptVersion: response.version, variables},
+        // Rethrow instead of falling back to the uncompiled prompt with raw {{variable}} syntax
+        throw reportError(`loadPrompt:${name}`, error, {
+            context: {name, label, promptVersion: response.version, variables},
             userMessage: "❌ Prompt error",
         });
     }
 }
+
+export const getGuiDoPrompt = (variables = {}) => loadPrompt("GuiDo", variables);
+export const getGuindexPrompt = (variables = {}) => loadPrompt("Guindex", variables);

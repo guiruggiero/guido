@@ -12,14 +12,14 @@ const guiddlewareClient = createRetryClient({
     },
 });
 
-// Creates a Google Task
-export const createTask = async (payload) => {
+// Creates a Google Task reminder
+export const createReminder = async (payload) => {
     try {
         const res = await guiddlewareClient.post("/tasks", payload);
         return res.data;
 
     } catch (error) {
-        throw reportError("guiddleware.createTask", error, {
+        throw reportError("guiddleware.createReminder", error, {
             context: {payload, status: error.response?.status, responseBody: error.response?.data},
             userMessage: "❌ Task creation error",
         });

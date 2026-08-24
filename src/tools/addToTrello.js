@@ -5,7 +5,7 @@ import {createTrelloCard} from "../utils/guiddleware.js";
 // Tool definition
 export const definition = {
     name: "addToTrello",
-    description: "Creates a Trello card. Use only when Gui explicitly says \"card\" or \"Trello\" — use addToTasks otherwise.",
+    description: "Creates a Trello card. Use only when Gui explicitly says \"card\" or \"Trello\" — use addReminder otherwise.",
     parameters: {
         type: Type.OBJECT,
         properties: {

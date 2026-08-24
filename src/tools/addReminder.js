@@ -1,21 +1,21 @@
 // Imports
 import {Type} from "@google/genai";
-import {createTask} from "../utils/guiddleware.js";
+import {createReminder} from "../utils/guiddleware.js";
 
 // Tool definition
 export const definition = {
-    name: "addToTasks",
+    name: "addReminder",
     description: "Adds a to-do item to Google Tasks",
     parameters: {
         type: Type.OBJECT,
         properties: {
             title: {
                 type: Type.STRING,
-                description: "Short task title, max 7 words",
+                description: "Short reminder title, max 7 words",
             },
             notes: {
                 type: Type.STRING,
-                description: "Any remaining context about the task not captured by the title",
+                description: "Any remaining context about the reminder not captured by the title",
             },
             due: {
                 type: Type.STRING,
@@ -29,11 +29,11 @@ export const definition = {
 // Tool handler
 export const handler = async (args) => {
     const notes = [args.notes, "Created with GuiDo"].filter(Boolean).join("\n\n");
-    const task = await createTask({title: args.title, notes, due: args.due});
+    const reminder = await createReminder({title: args.title, notes, due: args.due});
 
     return {
         success: true,
         title: args.title,
-        taskId: task.id,
+        reminderId: reminder.id,
     };
 };
