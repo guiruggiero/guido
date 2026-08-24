@@ -4,15 +4,15 @@ import {reportError} from "./reportError.js";
 
 // Axios instance for Home Assistant API
 const haClient = createRetryClient({
-    baseURL: process.env.HA_BASE_URL,
+    baseURL: process.env.HOME_ASSISTANT_BASE_URL,
     timeout: 8000,
     headers: {
-        "Authorization": `Bearer ${process.env.HA_TOKEN}`,
+        "Authorization": `Bearer ${process.env.HOME_ASSISTANT_TOKEN}`,
         "Content-Type": "application/json",
     },
 });
 
-const lockEntityId = process.env.HA_LOCK_ENTITY_ID;
+const lockEntityId = process.env.HOME_ASSISTANT_LOCK_ENTITY_ID;
 
 // Gets the door's state: "locked", "unlocked", "unavailable"
 export const getLockState = async () => {
