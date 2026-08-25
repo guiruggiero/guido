@@ -19,7 +19,7 @@ app.use(helmet()); // HTTP header security
 app.set("trust proxy", 1); // Trust exactly one hop (cloudflared) so rate limiting keys on the real client IP
 
 // Parser for multipart/form-data type
-const upload = multer({limits: {fieldSize: 64 * 1024}});
+const upload = multer({limits: {fieldSize: 64 * 1024, fields: 3, files: 0, parts: 3}}); // transcription, recordedAt, client
 
 // Rate limiters (by IP), one bucket per endpoint
 const rateLimitConfig = {
