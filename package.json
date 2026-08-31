@@ -21,7 +21,7 @@
     "express-rate-limit": "^8.6.2",
     "helmet": "^8.2.0",
     "mongodb": "^7.6.0",
-    "multer": "^2.2.0",
+    "multer": "^2.3.0",
     "sanitize-html": "^2.17.7"
   },
   "githubDependencies": {
@@ -30,6 +30,9 @@
   },
   "globalDependencies": {
     "@infisical/cli": ""
+  },
+  "overrides": {
+    "qs": ">=6.16.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
