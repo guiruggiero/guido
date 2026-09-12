@@ -67,16 +67,19 @@ const formatAmount = (amount, currency) => {
 
 const capitalize = (name) => name.charAt(0).toUpperCase() + name.slice(1);
 
+const getSplit = (args) => {
+    if (args.guiOwes !== undefined || args.georgiaOwes !== undefined) return {gui: args.guiOwes, georgia: args.georgiaOwes};
+    if (args.splitEqually) return "equal";
+    return undefined;
+};
+
 // Tool handler — validation lives in Guiddleware; formats a WhatsApp-friendly reply
 export const handler = async (args) => {
     const formattedAmount = formatAmount(args.amount, args.currency);
 
     // Anyone beyond Gui/Georgia forces a solo entry
     const hasOtherPeople = args.otherPeople?.length > 0;
-    const hasUnevenSplit = args.guiOwes !== undefined || args.georgiaOwes !== undefined;
-    const split = hasOtherPeople ? undefined : (hasUnevenSplit ?
-        {gui: args.guiOwes, georgia: args.georgiaOwes} :
-        (args.splitEqually ? "equal" : undefined));
+    const split = hasOtherPeople ? undefined : getSplit(args);
 
     const fullDetails = hasOtherPeople ?
         [args.details, `Also involved: ${args.otherPeople.map(capitalize).join(", ")}`]
