@@ -26,10 +26,18 @@ export const createReminder = async (payload) => {
     }
 };
 
-// Creates a Splitwise expense; resolution/fallback logic lives in Guiddleware
+// Creates a Settle Up expense; validation logic lives in Guiddleware
 export const createExpense = async (payload) => {
-    const res = await guiddlewareClient.post("/splitwise/expenses", payload);
-    return res.data;
+    try {
+        const res = await guiddlewareClient.post("/settleup/expenses", payload);
+        return res.data;
+
+    } catch (error) {
+        throw reportError("guiddleware.createExpense", error, {
+            context: {payload, status: error.response?.status, responseBody: error.response?.data},
+            userMessage: "❌ Expense creation error",
+        });
+    }
 };
 
 // Creates a Google Calendar event

@@ -13,9 +13,9 @@ import {
     handler as summarizeHandler,
 } from "./tools/summarize.js";
 import {
-    definition as addToSplitwiseDef,
-    handler as addToSplitwiseHandler,
-} from "./tools/addToSplitwise.js";
+    definition as addToSettleUpDef,
+    handler as addToSettleUpHandler,
+} from "./tools/addToSettleUp.js";
 import {
     definition as addReminderDef,
     handler as addReminderHandler,
@@ -64,7 +64,7 @@ const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 const functionDeclarations = [
     addToCalendarDef,
     summarizeDef,
-    addToSplitwiseDef,
+    addToSettleUpDef,
     addReminderDef,
     completeTaskDef,
     askClaudeCodeDef,
@@ -79,7 +79,7 @@ const functionDeclarations = [
 const toolHandlers = {
     [addToCalendarDef.name]: addToCalendarHandler,
     [summarizeDef.name]: summarizeHandler,
-    [addToSplitwiseDef.name]: addToSplitwiseHandler,
+    [addToSettleUpDef.name]: addToSettleUpHandler,
     [addReminderDef.name]: addReminderHandler,
     [completeTaskDef.name]: completeTaskHandler,
     [askClaudeCodeDef.name]: askClaudeCodeHandler,

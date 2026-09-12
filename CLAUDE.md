@@ -2,7 +2,7 @@
 
 ## What This Project Is
 
-GuiDo is a WhatsApp AI assistant. Incoming WhatsApp messages arrive via a Vonage webhook, get processed by Gemini (via Langfuse-managed prompts), and may trigger tool calls (Splitwise expense creation, calendar events, etc.) before a reply is sent back through Vonage. Conversation context is persisted per-task in MongoDB.
+GuiDo is a WhatsApp AI assistant. Incoming WhatsApp messages arrive via a Vonage webhook, get processed by Gemini (via Langfuse-managed prompts), and may trigger tool calls (Settle Up expense creation, calendar events, etc.) before a reply is sent back through Vonage. Conversation context is persisted per-task in MongoDB.
 
 The same app also serves **Guindex** (`POST /guindex`), a separate webhook for the Pebble Index 01 voice recorder that turns a button-press transcription into a single forced tool call — see the Guindex section below.
 
@@ -39,7 +39,7 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 |---|---|
 | `tools/addToCalendar.js` | Creates Google Calendar events, via Guiddleware |
 | `tools/summarize.js` | Creates concise summaries of messages |
-| `tools/addToSplitwise.js` | Adds expenses to Splitwise, via Guiddleware |
+| `tools/addToSettleUp.js` | Adds expenses to Settle Up, via Guiddleware. Scoped to Gui and Georgia only — any other participant (`otherPeople`) forces a solo entry with their names noted in `details`, even alongside Georgia |
 | `tools/addReminder.js` | Adds a to-do item to Google Tasks, via Guiddleware |
 | `tools/completeTask.js` | Marks a task as completed |
 | `tools/askClaudeCode.js` | Forwards a coding task/question to Claude Code, via the Claude Code Gateway |
@@ -56,11 +56,9 @@ Each tool file exports `definition` (Gemini function declaration) and `handler` 
 | File | Role |
 |---|---|
 | `utils/axiosClient.js` | HTTP retry client factory with exponential backoff |
-| `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`): `createReminder(payload)` (Google Tasks), `createExpense(payload)` (Splitwise), `createCalendarEvent(payload)`, `getFlightAwareUrl(flightNumber)`, `createTrelloCard(payload)`, `searchTrelloCards(query, limit?)`, `updateTrelloCard(id, payload)` |
+| `utils/guiddleware.js` | Axios client for the shared Guiddleware service (`guiruggiero/guiddleware`): `createReminder(payload)` (Google Tasks), `createExpense(payload)` (Settle Up), `createCalendarEvent(payload)`, `getFlightAwareUrl(flightNumber)`, `createTrelloCard(payload)`, `searchTrelloCards(query, limit?)`, `updateTrelloCard(id, payload)` |
 | `utils/claudeCode.js` | Axios client for the Claude Code Gateway (`guiruggiero/guiddleware`, `claude-code/`, runs on code-server): `runPrompt(prompt)` |
 | `utils/homeAssistant.js` | Axios client for Home Assistant's REST API, running as a Docker container on runtime-server (same box as GuiDo, loopback-only — not reached via Guiddleware): `getLockState()`, `lockDoor()`, `unlockDoor()` |
-
-Splitwise and Google Calendar used to have their own local clients here (`utils/splitwise.js`, a Calendar stub) — both now go through Guiddleware instead, which also means `addToSplitwise` gained split/uneven-split support GuiDo never had before (previously solo-expense only).
 
 **Guindex** (`POST /guindex`, handler in `guindex.js`) is a second, independent entry point for the Pebble Index 01 smart ring — not part of the WhatsApp flow above:
 1. The Index posts `multipart/form-data` (`transcription`, `recordedAt` as ms since epoch; audio is deliberately not sent, so the route uses `upload.none()`)
@@ -69,7 +67,7 @@ Splitwise and Google Calendar used to have their own local clients here (`utils/
 4. One `generateContent` call to `gemini-flash-latest` with `FunctionCallingConfigMode.ANY` — forced single tool call, no chat history, no clarifying questions possible
 5. The first tool call is executed, then a WhatsApp confirmation is sent via `sendMessage`
 
-Guindex keeps its own tool subset (`addReminder`, `addToCalendar`, `addToSplitwise`, `addToTrello`, `trackFlight`, `lockDoor`) and its own registry/dispatch, deliberately separate from `llmCaller.js`'s. `unlockDoor` and `getLockStatus` are excluded on purpose: with forced tool calling and no way to ask a clarifying question, a misheard transcription should never be able to unlock the door — locking is the only fail-safe direction. Errors are caught inside `handleGuindex` and reported to the user over WhatsApp, since there's nowhere else to surface them.
+Guindex keeps its own tool subset (`addReminder`, `addToCalendar`, `addToSettleUp`, `addToTrello`, `trackFlight`, `lockDoor`) and its own registry/dispatch, deliberately separate from `llmCaller.js`'s. `unlockDoor` and `getLockStatus` are excluded on purpose: with forced tool calling and no way to ask a clarifying question, a misheard transcription should never be able to unlock the door — locking is the only fail-safe direction. Errors are caught inside `handleGuindex` and reported to the user over WhatsApp, since there's nowhere else to surface them.
 
 **Environment detection** (`startup.js`): `process.env.ENV` is `"dev"` only if `APP_ENV=dev` is set (the `dev` npm script does this); everything else, including the runtime-server (which sets nothing), is `"prod"`. Controls the Langfuse prompt label (`"latest"` vs `"production"`) and the Mongo database name, and informs Sentry and Langfuse tracing.
 
