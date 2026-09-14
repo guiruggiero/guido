@@ -24,10 +24,6 @@
     "multer": "^2.3.0",
     "sanitize-html": "^2.17.7"
   },
-  "githubDependencies": {
-    "esbuild": "",
-    "terser": ""
-  },
   "globalDependencies": {
     "@infisical/cli": ""
   },
@@ -37,10 +33,12 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",
+    "esbuild": "^0.28.2",
     "eslint": "^10.10.0",
     "eslint-plugin-yml": "^3.8.1",
     "globals": "^17.12.0",
-    "nodemon": "^3.1.14"
+    "nodemon": "^3.1.14",
+    "terser": "^5.51.2"
   },
   "nodemonConfig": {
     "ext": "js",

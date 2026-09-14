@@ -28,8 +28,8 @@ jobs:
           node-version: 24
           cache: npm
 
-      - name: Install CLI tools
-        run: npm install --save-dev --ignore-scripts esbuild@latest terser@latest
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
 
       - name: Record commit hash for startup.js to read at runtime
         run: echo "${GITHUB_SHA::7}" > src/commit.txt
@@ -76,14 +76,14 @@ jobs:
           git commit -m "Automated bundling and deployment of ${{ github.sha }}"
           git push --force origin prod:prod-min
 
-      # - name: Trigger deploy on runtime-server
-      #   env:
-      #     DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
-      #     DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
-      #     DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
-      #   run: |
-      #     mkdir -p ~/.ssh
-      #     echo "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
-      #     chmod 600 ~/.ssh/deploy_key
-      #     ssh-keyscan -H "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts
-      #     ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" true
+      - name: Trigger deploy on runtime-server
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_SSH_USER: ${{ secrets.DEPLOY_SSH_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -H "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" true

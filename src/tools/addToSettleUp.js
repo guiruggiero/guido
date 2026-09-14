@@ -69,7 +69,7 @@ const capitalize = (name) => name.charAt(0).toUpperCase() + name.slice(1);
 
 const getSplit = (args) => {
     if (args.guiOwes !== undefined || args.georgiaOwes !== undefined) return {gui: args.guiOwes, georgia: args.georgiaOwes};
-    if (args.splitEqually) return "equal";
+    if (args.splitEqually) return {equal: true};
     return undefined;
 };
 
@@ -79,7 +79,8 @@ export const handler = async (args) => {
 
     // Anyone beyond Gui/Georgia forces a solo entry
     const hasOtherPeople = args.otherPeople?.length > 0;
-    const split = hasOtherPeople ? undefined : getSplit(args);
+    const splitDetails = hasOtherPeople ? undefined : getSplit(args);
+    const split = splitDetails?.equal ? "equal" : splitDetails; // Guiddleware wire format: "equal" | {gui, georgia} | undefined
 
     const fullDetails = hasOtherPeople ?
         [args.details, `Also involved: ${args.otherPeople.map(capitalize).join(", ")}`]
