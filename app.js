@@ -119,7 +119,11 @@ const server = app.listen(process.env.EXPRESS_PORT, () => {
 });
 
 // Graceful shutdown
+let isShuttingDown = false;
 function gracefulShutdown() {
+    if (isShuttingDown) return; // Guard against SIGINT/SIGTERM both landing
+    isShuttingDown = true;
+
     console.log("");
 
     // Force exit if shutdown hangs
