@@ -102,8 +102,8 @@ app.post("/guindex", guindexRateLimit, validateIndexAuth, upload.none(), (req, r
 
 // Health/status endpoint
 app.get("/guido-health", healthRateLimit, (req, res) => {
-    const origin = req.headers.origin;
-    if (allowedOrigins.includes(origin)) res.set("Access-Control-Allow-Origin", origin);
+    const matchedOrigin = allowedOrigins.find((origin) => origin === req.headers.origin);
+    if (matchedOrigin) res.set("Access-Control-Allow-Origin", matchedOrigin); // Echo our own known-safe value
 
     res.status(200).json({commit: process.env.CURRENT_COMMIT});
 });
