@@ -1,21 +1,11 @@
 // Imports
-import {verifySignature} from "@vonage/jwt";
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
-import fs from "node:fs/promises";
 import * as Sentry from "@sentry/node";
+import {writeFile} from "node:fs/promises";
+import {reportError} from "./utils/reportError.js";
 import {Vonage} from "@vonage/server-sdk";
 import {Channels} from "@vonage/messages";
-
-// Validate message signature
-export function validateSignature(request) {
-    // Get signature from header
-    const signature = request.headers.authorization.split(" ")[1];
-    if (!signature) throw new Error("No signature");
-
-    // Validate signature
-    if (!verifySignature(signature, process.env.VONAGE_SIGNATURE_SECRET)) throw new Error("Invalid signature");
-}
 
 // Sanitize text message
 function sanitizeText(messageText) {
@@ -26,7 +16,7 @@ function sanitizeText(messageText) {
     sanitizedMessage = sanitizedMessage.trim();
     
     // Remove HTML tags and attributes
-    sanitizedMessage = sanitizeHtml(sanitizedMessage, { 
+    sanitizedMessage = sanitizeHtml(sanitizedMessage, {
         allowedTags: [],
         allowedAttributes: {},
     });
@@ -41,33 +31,36 @@ async function getMedia(mediaURL, messageID, extension) {
         const parsedUrl = new URL(mediaURL);
         if (!parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
 
-        // Get media
-        const response = await fetch(mediaURL);
+        // Get media 
+        const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
+        const response = await fetch(parsedUrl.href);
+
+        // Validate file size — TODO: byteLength check below may be redundant for trusted Vonage CDN
+        const contentLength = Number.parseInt(response.headers.get("content-length"), 10);
+        if (contentLength > MAX_MEDIA_SIZE) {
+            Sentry.logger.error("Media file too large", {contentLength, messageID});
+            throw new Error("Media file too large");
+        }
 
         // Convert response to buffer
         const arrayBuffer = await response.arrayBuffer();
+        if (arrayBuffer.byteLength > MAX_MEDIA_SIZE) {
+            Sentry.logger.error("Media file too large", {byteLength: arrayBuffer.byteLength, messageID});
+            throw new Error("Media file too large");
+        }
         const buffer = Buffer.from(arrayBuffer);
 
-        // Save in local folder
-        await fs.writeFile(`/home/ubuntu/guido/media/${messageID}.${extension}`, buffer);
+        // Save in local folder - TODO: upload media to Google Cloud Storage
+        await writeFile(`/home/ubuntu/guido/media/${messageID}.${extension}`, buffer);
 
         // Convert to base64 for LLM call
         return buffer.toString("base64");
 
     } catch (error) {
-        Sentry.withScope((scope) => {
-            scope.setTag("operation", "getMedia");
-            scope.setContext("payload", {
-                mediaURL,
-                messageID,
-                extension,
-            });
-            Sentry.captureException(error);
+        throw reportError("getMedia", error, {
+            context: {mediaURL, messageID, extension},
+            userMessage: "❌ Media processing error",
         });
-
-        // Rethrow to show user a message
-        error.userMessage = "❌ Media processing error";
-        throw error;
     }
 }
 
@@ -80,10 +73,18 @@ export async function receiveMessage(messageBody) {
         return {validation: "⚠️ Unauthorized"};
     }
 
+    // Validate timestamp before it flows into the database query
+    const timestamp = new Date(messageBody.timestamp);
+    if (Number.isNaN(timestamp.getTime())) {
+        Sentry.logger.warn("Invalid message timestamp", {timestamp: messageBody.timestamp});
+
+        return {validation: "⚠️ Invalid timestamp"};
+    }
+
     // Extract relevant data from message
     let message = {
         id: messageBody.message_uuid,
-        timestamp: new Date(messageBody.timestamp),
+        timestamp,
         type: messageBody.message_type,
     };
 
@@ -95,8 +96,11 @@ export async function receiveMessage(messageBody) {
 
     // Media message - "audio", "image", or "file"
     } else if (message.type === "audio" || message.type === "image" || message.type === "file") {
+        // Get file extension
+        message.extension = messageBody[message.type].name.split(".").pop();
+
         // Get media file
-        message.content = await getMedia(messageBody[message.type].url, message.id, messageBody[message.type].name.split(".")[1]);
+        message.content = await getMedia(messageBody[message.type].url, message.id, message.extension);
 
         message.validation = "OK";
 
@@ -117,9 +121,9 @@ const vonage = new Vonage(
 );
 
 // Send response back
-export  function sendMessage(messageText) {
+export async function sendMessage(messageText) {
     try {
-        vonage.messages.send({
+        await vonage.messages.send({
             from: "14157386102",
             to: process.env.PHONE_NUMBER,
             channel: Channels.WHATSAPP,
@@ -128,14 +132,9 @@ export  function sendMessage(messageText) {
         });
     
     } catch (error) {
-        Sentry.withScope((scope) => {
-            scope.setTag("operation", "sendMessage");
-            scope.setContext("payload", {messageText});
-            Sentry.captureException(error);
+        throw reportError("sendMessage", error, {
+            context: {messageText},
+            userMessage: "❌ Message sending error",
         });
-
-        // Rethrow to show user a message
-        error.userMessage = "❌ Message sending error";
-        throw error;
     }
 }

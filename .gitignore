@@ -1,3 +1,7 @@
 node_modules/
 .env
 dist/
+media/
+promptGuiDo.md
+promptGuindex.md
+.DS_Store

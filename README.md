@@ -1,3 +1,3 @@
 # GuiDo
 
-Just like [GuiMail](https://github.com/guiruggiero/guimail), but for WhatsApp
+Just like [Guimail](https://github.com/guiruggiero/guimail), but for WhatsApp

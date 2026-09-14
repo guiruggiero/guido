@@ -1,0 +1,27 @@
+// Import
+import {Type} from "@google/genai";
+
+// Tool definition
+export const definition = {
+    name: "completeTask",
+    description: "Completes the task at hand by updating its status in the database",
+    parameters: {
+        type: Type.OBJECT,
+        properties: {
+            taskStatus: {
+                type: Type.STRING,
+                enum: ["success"],
+                description: "Pass 'success' status to complete task (with Gui's confirmation)",
+            },
+        },
+        required: ["taskStatus"],
+    },
+};
+
+// Tool handler
+export const handler = (args) => {
+    return {
+        success: true,
+        taskStatus: args.taskStatus,
+    };
+};
