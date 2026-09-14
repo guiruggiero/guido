@@ -18,6 +18,8 @@ The same app also serves **Guindex** (`POST /guindex`), a separate webhook for t
 7. `sendMessage` sends the final reply via Vonage
 8. `updateTaskHistory` persists the new messages to MongoDB
 
+`GET /guido-health` is a separate, unauthenticated status route (its own looser `healthRateLimit`, 60 per 10 minutes) polled by the guiruggiero.com admin dashboard. It's deliberately not under `process.env.APP_PATH` — that's the webhook's own path, and `website/` is a public repo, so reusing it there would leak it. Returns `{commit}` with an `Access-Control-Allow-Origin` header echoed back only for origins in the local `allowedOrigins` list (`guiruggiero.com` and the dev ngrok tunnel).
+
 **Key source files** (all under `src/`):
 
 | File | Role |

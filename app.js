@@ -30,6 +30,13 @@ const rateLimitConfig = {
 };
 const guidoRateLimit = rateLimit({...rateLimitConfig, limit: 20});
 const guindexRateLimit = rateLimit({...rateLimitConfig, limit: 20});
+const healthRateLimit = rateLimit({...rateLimitConfig, limit: 60}); // Looser rate
+
+// Browser origins allowed to read health endpoint
+const allowedOrigins = [
+    "https://guiruggiero.com",
+    "https://probable-firmly-gobbler.ngrok-free.app",
+];
 
 // GuiDo endpoint
 app.post(process.env.APP_PATH, guidoRateLimit, async (req, res) => {
@@ -93,9 +100,12 @@ app.post("/guindex", guindexRateLimit, validateIndexAuth, upload.none(), (req, r
     handleGuindex(transcription, recordedAt);
 });
 
-// Status endpoint
-app.get(process.env.APP_PATH, guidoRateLimit, (req, res) => {
-    res.status(200).send(`GuiDo is up and running! (commit: <b>${process.env.CURRENT_COMMIT}</b>)`);
+// Health/status endpoint
+app.get("/guido-health", healthRateLimit, (req, res) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) res.set("Access-Control-Allow-Origin", origin);
+
+    res.status(200).json({commit: process.env.CURRENT_COMMIT});
 });
 
 // Middleware for error tracking
