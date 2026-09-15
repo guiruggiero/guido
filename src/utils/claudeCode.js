@@ -19,7 +19,7 @@ const gatewayClient = createRetryClient({
 // Forwards a prompt to Claude Code
 export const runPrompt = async (prompt) => {
     try {
-        const res = await gatewayClient.post("/run", {prompt});
+        const res = await gatewayClient.post(process.env.CLAUDE_CODE_GATEWAY_PATH, {prompt});
         return res.data;
 
     } catch (error) {
