@@ -72,7 +72,7 @@ The same app also serves **Guindex** (`POST /guindex`), a separate webhook for t
 4. One `generateContent` call to `gemini-flash-latest` with `FunctionCallingConfigMode.ANY` — forced single tool call, no chat history, no clarifying questions possible
 5. The first tool call is executed, then a WhatsApp confirmation is sent via `sendMessage`
 
-Guindex keeps its own tool subset (`addReminder`, `addToCalendar`, `addToSettleUp`, `addToTrello`, `trackFlight`, `lockDoor`) and its own registry/dispatch, deliberately separate from `llmCaller.js`'s. `unlockDoor` and `getLockStatus` are excluded on purpose: with forced tool calling and no way to ask a clarifying question, a misheard transcription should never be able to unlock the door — locking is the only fail-safe direction. Errors are caught inside `handleGuindex` and reported to the user over WhatsApp, since there's nowhere else to surface them.
+Guindex keeps its own tool subset (`addReminder`, `addToSettleUp`, `addToTrello`, `trackFlight`, `lockDoor`) and its own registry/dispatch, deliberately separate from `llmCaller.js`'s. `addToCalendar`, `unlockDoor`, and `getLockStatus` are excluded on purpose. Errors are caught inside `handleGuindex` and reported to the user over WhatsApp, since there's nowhere else to surface them.
 
 ## Operational notes
 

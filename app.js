@@ -28,7 +28,7 @@ const rateLimitConfig = {
     legacyHeaders: false,
     handler: (req, res) => res.status(429).send("Too many requests"),
 };
-const guidoRateLimit = rateLimit({...rateLimitConfig, limit: 20});
+const guidoRateLimit = rateLimit({...rateLimitConfig, limit: 60}); // Higher for multi-turn conversations
 const guindexRateLimit = rateLimit({...rateLimitConfig, limit: 20});
 const healthRateLimit = rateLimit({...rateLimitConfig, limit: 60}); // Looser rate
 
