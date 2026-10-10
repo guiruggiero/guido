@@ -85,5 +85,5 @@ jobs:
           mkdir -p ~/.ssh
           echo "$DEPLOY_SSH_KEY" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-          ssh-keyscan -H "$DEPLOY_SSH_HOST" >> ~/.ssh/known_hosts
+          echo "$DEPLOY_SSH_HOST ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAILCWkAkMzIR037leiqjk3EAppsvNkJQpYb9UebgHFCzM" >> ~/.ssh/known_hosts
           ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=yes "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" true
