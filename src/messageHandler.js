@@ -2,7 +2,7 @@
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
 import * as Sentry from "@sentry/node";
-import {join} from "node:path";
+import {resolve, sep} from "node:path";
 import {writeFile} from "node:fs/promises";
 import {reportError} from "./utils/reportError.js";
 import {Vonage} from "@vonage/server-sdk";
@@ -67,7 +67,10 @@ async function getMedia(mediaURL, messageID, extension) {
         const buffer = Buffer.from(arrayBuffer);
 
         // Save in local folder - TODO: upload media to Google Cloud Storage
-        await writeFile(join("/home/ubuntu/guido/media", `${messageID}.${extension}`), buffer);
+        const mediaDir = "/home/ubuntu/guido/media";
+        const filePath = resolve(mediaDir, `${messageID}.${extension}`);
+        if (!filePath.startsWith(mediaDir + sep)) throw new Error("Invalid media file path"); // Must stay inside media/
+        await writeFile(filePath, buffer);
 
         // Convert to base64 for LLM call
         return buffer.toString("base64");
