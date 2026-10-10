@@ -2,6 +2,7 @@
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
 import * as Sentry from "@sentry/node";
+import {join} from "node:path";
 import {writeFile} from "node:fs/promises";
 import {reportError} from "./utils/reportError.js";
 import {Vonage} from "@vonage/server-sdk";
@@ -29,11 +30,17 @@ async function getMedia(mediaURL, messageID, extension) {
     try {
         // Prevent Server-Side Request Forgery (SSRF)
         const parsedUrl = new URL(mediaURL);
-        if (!parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
+        if (parsedUrl.protocol !== "https:" || parsedUrl.port || parsedUrl.username || parsedUrl.password ||
+            !parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
 
-        // Get media 
+        // Prevent path traversal, only plain identifiers/extensions reach the file path
+        if (!/^[\w-]+$/.test(messageID) || !/^[a-z0-9]{1,16}$/i.test(extension)) {
+            throw new Error("Invalid media file name");
+        }
+
+        // Get media, never following redirects to an unvetted host
         const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
-        const response = await fetch(parsedUrl.href);
+        const response = await fetch(parsedUrl.href, {redirect: "error"});
 
         // Validate file size — TODO: byteLength check below may be redundant for trusted Vonage CDN
         const contentLength = Number.parseInt(response.headers.get("content-length"), 10);
@@ -51,7 +58,7 @@ async function getMedia(mediaURL, messageID, extension) {
         const buffer = Buffer.from(arrayBuffer);
 
         // Save in local folder - TODO: upload media to Google Cloud Storage
-        await writeFile(`/home/ubuntu/guido/media/${messageID}.${extension}`, buffer);
+        await writeFile(join("/home/ubuntu/guido/media", `${messageID}.${extension}`), buffer);
 
         // Convert to base64 for LLM call
         return buffer.toString("base64");
