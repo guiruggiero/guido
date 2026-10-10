@@ -9,10 +9,6 @@ import {
     handler as addReminderHandler,
 } from "./tools/addReminder.js";
 import {
-    definition as addToCalendarDef,
-    handler as addToCalendarHandler,
-} from "./tools/addToCalendar.js";
-import {
     definition as addToSettleUpDef,
     handler as addToSettleUpHandler,
 } from "./tools/addToSettleUp.js";
@@ -35,7 +31,6 @@ const ai = new GoogleGenAI({apiKey: process.env.GEMINI_API_KEY});
 // Tool registry
 const guindexFunctionDeclarations = [
     addReminderDef,
-    addToCalendarDef,
     addToSettleUpDef,
     addToTrelloDef,
     trackFlightDef,
@@ -43,7 +38,6 @@ const guindexFunctionDeclarations = [
 ];
 const guindexToolHandlers = {
     [addReminderDef.name]: addReminderHandler,
-    [addToCalendarDef.name]: addToCalendarHandler,
     [addToSettleUpDef.name]: addToSettleUpHandler,
     [addToTrelloDef.name]: addToTrelloHandler,
     [trackFlightDef.name]: trackFlightHandler,
@@ -55,8 +49,6 @@ function formatConfirmation(toolName, result) {
     switch (toolName) {
         case addReminderDef.name:
             return `✅ Reminder: "${result.title}"`;
-        case addToCalendarDef.name:
-            return `✅ Event: "${result.title}" (${result.start})`;
         case addToSettleUpDef.name: {
             const base = `✅ Expense: ${result.title} (${result.amount})`;
             return result.note ? `${base}\n⚠️ ${result.note}` : base;

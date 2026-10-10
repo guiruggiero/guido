@@ -2,6 +2,7 @@
 import sanitizeHtml from "sanitize-html";
 import {URL} from "node:url";
 import * as Sentry from "@sentry/node";
+import {resolve, sep} from "node:path";
 import {writeFile} from "node:fs/promises";
 import {reportError} from "./utils/reportError.js";
 import {Vonage} from "@vonage/server-sdk";
@@ -24,16 +25,31 @@ function sanitizeText(messageText) {
     return sanitizedMessage;
 }
 
+// Vonage regional media hosts, the only ones we ever fetch from
+const MEDIA_HOSTS = ["api-us.nexmo.com", "api-eu.nexmo.com", "api-ap.nexmo.com"];
+
 // Get media file
 async function getMedia(mediaURL, messageID, extension) {
     try {
         // Prevent Server-Side Request Forgery (SSRF)
         const parsedUrl = new URL(mediaURL);
-        if (!parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
+        if (parsedUrl.protocol !== "https:" || parsedUrl.port || parsedUrl.username || parsedUrl.password ||
+            !MEDIA_HOSTS.includes(parsedUrl.hostname)) throw new Error("Untrusted media URL");
 
-        // Get media 
+        // Rebuild the URL from our own constants, so only a validated media ID comes from the message
+        const mediaId = /^\/v3\/media\/([\w-]+)$/.exec(parsedUrl.pathname)?.[1];
+        if (!mediaId) throw new Error("Untrusted media URL");
+        const trustedHost = MEDIA_HOSTS.find((host) => host === parsedUrl.hostname);
+        const safeUrl = `https://${trustedHost}/v3/media/${encodeURIComponent(mediaId)}`;
+
+        // Prevent path traversal, only plain identifiers/extensions reach the file path
+        if (!/^[\w-]+$/.test(messageID) || !/^[a-z0-9]{1,16}$/i.test(extension)) {
+            throw new Error("Invalid media file name");
+        }
+
+        // Get media, never following redirects to an unvetted host
         const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
-        const response = await fetch(parsedUrl.href);
+        const response = await fetch(safeUrl, {redirect: "error"});
 
         // Validate file size — TODO: byteLength check below may be redundant for trusted Vonage CDN
         const contentLength = Number.parseInt(response.headers.get("content-length"), 10);
@@ -51,7 +67,10 @@ async function getMedia(mediaURL, messageID, extension) {
         const buffer = Buffer.from(arrayBuffer);
 
         // Save in local folder - TODO: upload media to Google Cloud Storage
-        await writeFile(`/home/ubuntu/guido/media/${messageID}.${extension}`, buffer);
+        const mediaDir = "/home/ubuntu/guido/media";
+        const filePath = resolve(mediaDir, `${messageID}.${extension}`);
+        if (!filePath.startsWith(mediaDir + sep)) throw new Error("Invalid media file path"); // Must stay inside media/
+        await writeFile(filePath, buffer);
 
         // Convert to base64 for LLM call
         return buffer.toString("base64");
