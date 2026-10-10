@@ -36,9 +36,11 @@ async function getMedia(mediaURL, messageID, extension) {
         if (parsedUrl.protocol !== "https:" || parsedUrl.port || parsedUrl.username || parsedUrl.password ||
             !MEDIA_HOSTS.includes(parsedUrl.hostname)) throw new Error("Untrusted media URL");
 
-        // Rebuild the URL from our own host constant, so only the path and query come from the message
+        // Rebuild the URL from our own constants, so only a validated media ID comes from the message
+        const mediaId = /^\/v3\/media\/([\w-]+)$/.exec(parsedUrl.pathname)?.[1];
+        if (!mediaId) throw new Error("Untrusted media URL");
         const trustedHost = MEDIA_HOSTS.find((host) => host === parsedUrl.hostname);
-        const safeUrl = `https://${trustedHost}${parsedUrl.pathname}${parsedUrl.search}`;
+        const safeUrl = `https://${trustedHost}/v3/media/${encodeURIComponent(mediaId)}`;
 
         // Prevent path traversal, only plain identifiers/extensions reach the file path
         if (!/^[\w-]+$/.test(messageID) || !/^[a-z0-9]{1,16}$/i.test(extension)) {
