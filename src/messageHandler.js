@@ -25,13 +25,20 @@ function sanitizeText(messageText) {
     return sanitizedMessage;
 }
 
+// Vonage regional media hosts, the only ones we ever fetch from
+const MEDIA_HOSTS = ["api-us.nexmo.com", "api-eu.nexmo.com", "api-ap.nexmo.com"];
+
 // Get media file
 async function getMedia(mediaURL, messageID, extension) {
     try {
         // Prevent Server-Side Request Forgery (SSRF)
         const parsedUrl = new URL(mediaURL);
         if (parsedUrl.protocol !== "https:" || parsedUrl.port || parsedUrl.username || parsedUrl.password ||
-            !parsedUrl.hostname.endsWith(".nexmo.com")) throw new Error("Untrusted media URL");
+            !MEDIA_HOSTS.includes(parsedUrl.hostname)) throw new Error("Untrusted media URL");
+
+        // Rebuild the URL from our own host constant, so only the path and query come from the message
+        const trustedHost = MEDIA_HOSTS.find((host) => host === parsedUrl.hostname);
+        const safeUrl = `https://${trustedHost}${parsedUrl.pathname}${parsedUrl.search}`;
 
         // Prevent path traversal, only plain identifiers/extensions reach the file path
         if (!/^[\w-]+$/.test(messageID) || !/^[a-z0-9]{1,16}$/i.test(extension)) {
@@ -40,7 +47,7 @@ async function getMedia(mediaURL, messageID, extension) {
 
         // Get media, never following redirects to an unvetted host
         const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
-        const response = await fetch(parsedUrl.href, {redirect: "error"});
+        const response = await fetch(safeUrl, {redirect: "error"});
 
         // Validate file size — TODO: byteLength check below may be redundant for trusted Vonage CDN
         const contentLength = Number.parseInt(response.headers.get("content-length"), 10);
