@@ -27,9 +27,6 @@
   "globalDependencies": {
     "@infisical/cli": ""
   },
-  "overrides": {
-    "qs": ">=6.16.0"
-  },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@stylistic/eslint-plugin": "^5.10.0",

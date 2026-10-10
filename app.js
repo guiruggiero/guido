@@ -97,7 +97,7 @@ app.post("/guindex", guindexRateLimit, validateIndexAuth, upload.none(), (req, r
     // Process async
     const {transcription, recordedAt} = req.body ?? {}; // Undefined if the caller didn't send multipart
     if (!transcription) return;
-    handleGuindex(transcription, recordedAt);
+    void handleGuindex(transcription, recordedAt); // Fire-and-forget, errors are handled inside
 });
 
 // Health/status endpoint
