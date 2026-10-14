@@ -235,7 +235,7 @@ async function callLLMTraced(message) {
             // Get model prompt
             const instructions = await getGuiDoPrompt({ // Prompt variable
                 today: (message.timestamp).toLocaleDateString("en-US", {day: "numeric", month: "long", year: "numeric", timeZone: "America/Los_Angeles"}),
-                time: (message.timestamp).toLocaleTimeString("en-US", {hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles"}), // TODO: get time zone at runtime
+                time: (message.timestamp).toLocaleTimeString("en-US", {hour: "2-digit", minute: "2-digit", timeZone: "America/Los_Angeles"}),
             });
 
             // Initialize chat with task history and prompt

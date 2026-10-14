@@ -14,7 +14,7 @@
         "type": "audio, image, or file",
         "extension": "ogg, jpg, pdf, etc",
         "content": "base64",
-        "understanding": "" // TODO: how to extract?
+        "understanding": ""
     },
     "others": {
         // Same as text, but/plus:

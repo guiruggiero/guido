@@ -51,7 +51,7 @@ async function getMedia(mediaURL, messageID, extension) {
         const MAX_MEDIA_SIZE = 10 * 1024 * 1024; // 10MB
         const response = await fetch(safeUrl, {redirect: "error"});
 
-        // Validate file size — TODO: byteLength check below may be redundant for trusted Vonage CDN
+        // Validate file size
         const contentLength = Number.parseInt(response.headers.get("content-length"), 10);
         if (contentLength > MAX_MEDIA_SIZE) {
             Sentry.logger.error("Media file too large", {contentLength, messageID});
@@ -66,7 +66,7 @@ async function getMedia(mediaURL, messageID, extension) {
         }
         const buffer = Buffer.from(arrayBuffer);
 
-        // Save in local folder - TODO: upload media to Google Cloud Storage
+        // Save in local folder
         const mediaDir = "/home/ubuntu/guido/media";
         const filePath = resolve(mediaDir, `${messageID}.${extension}`);
         if (!filePath.startsWith(mediaDir + sep)) throw new Error("Invalid media file path"); // Must stay inside media/
