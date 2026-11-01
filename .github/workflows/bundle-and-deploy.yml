@@ -51,7 +51,7 @@ jobs:
             -path "./src/startup.js" -o \
             -path "./src/startup.js.map" -o \
             -path "./src/commit.txt" -o \
-            -path "./.infisical.json" -o \
+            -path "./.infisical.yaml" -o \
             -path "./package-lock.json" -o \
             -path "./package.json" \
           \) -print0 | xargs -0 -P 4 -I {} rm -rf {} || exit 1
