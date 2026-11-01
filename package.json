@@ -37,6 +37,10 @@
     "nodemon": "^3.1.14",
     "terser": "^5.51.2"
   },
+  "overrides": {
+    "minimatch": ">=11.0.1",
+    "glob": ">=14.0.2"
+  },
   "nodemonConfig": {
     "ext": "js",
     "ignore": [
