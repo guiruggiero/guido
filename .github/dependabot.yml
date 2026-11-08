@@ -28,6 +28,12 @@ updates:
       day: saturday
       time: "00:00"
       timezone: America/Los_Angeles
+    ignore:
+      # @langfuse/otel 6.x peers on exporters <0.300.0 (ERESOLVE otherwise)
+      - dependency-name: "@opentelemetry/exporter-trace-otlp-http"
+        versions: [">=0.300.0"]
+      - dependency-name: "@opentelemetry/otlp-exporter-base"
+        versions: [">=0.300.0"]
     groups:
       version:
         update-types:
