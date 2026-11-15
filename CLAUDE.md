@@ -69,7 +69,7 @@ The same app also serves **Guindex** (`POST /guindex`), a separate webhook for t
 1. The Index posts `multipart/form-data` (`transcription`, `recordedAt` as ms since epoch; audio is deliberately not sent, so the route uses `upload.none()`)
 2. `validateIndexAuth` checks a plain bearer token against `INDEX_WEBHOOK_SECRET` — separate from the Vonage JWT path, and returns 401 rather than 200 (the Index doesn't retry or read response bodies)
 3. 200 is sent immediately, then `handleGuindex` runs async
-4. One `generateContent` call to `gemini-flash-latest` with `FunctionCallingConfigMode.ANY` — forced single tool call, no chat history, no clarifying questions possible
+4. One `generateContent` call to `gemini-3.8-flash` with `FunctionCallingConfigMode.ANY` — forced single tool call, no chat history, no clarifying questions possible
 5. The first tool call is executed, then a WhatsApp confirmation is sent via `sendMessage`
 
 Guindex keeps its own tool subset (`addReminder`, `addToSettleUp`, `addToTrello`, `trackFlight`, `lockDoor`) and its own registry/dispatch, deliberately separate from `llmCaller.js`'s. `addToCalendar`, `unlockDoor`, and `getLockStatus` are excluded on purpose. Errors are caught inside `handleGuindex` and reported to the user over WhatsApp, since there's nowhere else to surface them.
@@ -81,6 +81,8 @@ Guindex keeps its own tool subset (`addReminder`, `addToSettleUp`, `addToTrello`
 **Media handling**: media files (image, audio, file) are fetched from Vonage and saved to `media/{messageId}.{ext}` on disk (TODO: migrate to Google Cloud Storage). `getMedia` only fetches `https` URLs on the Vonage regional hosts in `MEDIA_HOSTS`, path `/v3/media/<id>` only (no port, credentials, query, or redirects) and rejects any message ID or extension that isn't a plain identifier, to block SSRF and path traversal. In MongoDB, only the filename is stored as the message `content`, not the base64 data. When replaying history to the LLM, `prepareForLLM` formats media turns as `[type: filename]` (e.g., `[image: abc123.jpg]`).
 
 **OpenTelemetry exporters** (`@opentelemetry/exporter-trace-otlp-http`, `@opentelemetry/otlp-exporter-base`) are pinned as direct dependencies because `@langfuse/otel` declares them as peers with a range up to `<1.0.0`. An unpinned install resolves 0.300.x, which needs `@opentelemetry/api` 1.10 while `@opentelemetry/core` 2.x needs it below 1.10, and the app crashes on startup with a missing `SeverityNumber` export. After any dependency change, run `npm ls` (look for `invalid`) and import `@langfuse/otel`
+
+**Gemini model and API version**: `@google/genai` v3 defaults to API `v1`, where the `-latest` aliases return 404, so models are pinned (`gemini-3.8-flash`) and bumped by hand. The main chat's `toolConfig` sets `includeServerSideToolInvocations: true`, which the API requires to combine built-in tools (`googleSearch`, `urlContext`) with function calling — without it every call fails with a 400
 
 **Secrets** are managed by Infisical CLI in one environment, `dev`, used everywhere. The dev/prod split above is just a Langfuse prompt label, not a separate secret store
 
