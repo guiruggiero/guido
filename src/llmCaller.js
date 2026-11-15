@@ -108,6 +108,7 @@ const modelConfig = {
             functionCallingConfig: {
                 mode: FunctionCallingConfigMode.AUTO,
             },
+            includeServerSideToolInvocations: true, // Required to combine built-in tools (googleSearch, urlContext) with function calling
         },
     },
 };

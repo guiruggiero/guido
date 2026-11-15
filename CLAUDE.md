@@ -82,6 +82,8 @@ Guindex keeps its own tool subset (`addReminder`, `addToSettleUp`, `addToTrello`
 
 **OpenTelemetry exporters** (`@opentelemetry/exporter-trace-otlp-http`, `@opentelemetry/otlp-exporter-base`) are pinned as direct dependencies because `@langfuse/otel` declares them as peers with a range up to `<1.0.0`. An unpinned install resolves 0.300.x, which needs `@opentelemetry/api` 1.10 while `@opentelemetry/core` 2.x needs it below 1.10, and the app crashes on startup with a missing `SeverityNumber` export. After any dependency change, run `npm ls` (look for `invalid`) and import `@langfuse/otel`
 
+**Gemini model and API version**: `@google/genai` v3 defaults to API `v1`, where the `-latest` aliases return 404, so models are pinned (`gemini-3.8-flash`) and bumped by hand. The main chat's `toolConfig` sets `includeServerSideToolInvocations: true`, which the API requires to combine built-in tools (`googleSearch`, `urlContext`) with function calling — without it every call fails with a 400
+
 **Secrets** are managed by Infisical CLI in one environment, `dev`, used everywhere. The dev/prod split above is just a Langfuse prompt label, not a separate secret store
 
 **Lock control** (`utils/homeAssistant.js`) wraps an unofficial API one layer removed (Home Assistant → August's cloud API), so occasional failures are expected — errors propagate to `llmCaller.js`'s generic tool-call catch, which logs to Sentry and lets the LLM phrase a "couldn't reach it" reply rather than a raw error. Convenience-tier only, not safety-critical automation. If the August integration itself breaks, check `alerts.home-assistant.io/alerts/august/` and GitHub issues on `home-assistant/core` filtered to "august" before assuming it's a GuiDo-side bug.
