@@ -69,7 +69,7 @@ The same app also serves **Guindex** (`POST /guindex`), a separate webhook for t
 1. The Index posts `multipart/form-data` (`transcription`, `recordedAt` as ms since epoch; audio is deliberately not sent, so the route uses `upload.none()`)
 2. `validateIndexAuth` checks a plain bearer token against `INDEX_WEBHOOK_SECRET` — separate from the Vonage JWT path, and returns 401 rather than 200 (the Index doesn't retry or read response bodies)
 3. 200 is sent immediately, then `handleGuindex` runs async
-4. One `generateContent` call to `gemini-flash-latest` with `FunctionCallingConfigMode.ANY` — forced single tool call, no chat history, no clarifying questions possible
+4. One `generateContent` call to `gemini-3.8-flash` with `FunctionCallingConfigMode.ANY` — forced single tool call, no chat history, no clarifying questions possible
 5. The first tool call is executed, then a WhatsApp confirmation is sent via `sendMessage`
 
 Guindex keeps its own tool subset (`addReminder`, `addToSettleUp`, `addToTrello`, `trackFlight`, `lockDoor`) and its own registry/dispatch, deliberately separate from `llmCaller.js`'s. `addToCalendar`, `unlockDoor`, and `getLockStatus` are excluded on purpose. Errors are caught inside `handleGuindex` and reported to the user over WhatsApp, since there's nowhere else to surface them.

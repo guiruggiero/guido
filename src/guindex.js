@@ -80,7 +80,7 @@ export async function handleGuindex(transcription, recordedAt) {
 
         // Single-turn with forced tool-call
         const response = await ai.models.generateContent({
-            model: "gemini-flash-latest",
+            model: "gemini-3.8-flash",
             config: {
                 systemInstruction,
                 tools: [{functionDeclarations: guindexFunctionDeclarations}],
