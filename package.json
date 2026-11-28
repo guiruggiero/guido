@@ -13,7 +13,7 @@
     "@opentelemetry/exporter-trace-otlp-http": "^0.223.2",
     "@opentelemetry/otlp-exporter-base": "^0.223.0",
     "@opentelemetry/sdk-trace-node": "^2.12.0",
-    "@sentry/node": "^11.12.0",
+    "@sentry/node": "^11.17.0",
     "@vonage/jwt": "^1.18.1",
     "@vonage/messages": "^1.28.1",
     "@vonage/server-sdk": "^3.31.1",
